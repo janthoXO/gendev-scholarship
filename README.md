@@ -31,7 +31,7 @@ limiting product variety while still displaying only actual offers that the inte
 
 1. Robust handling of API failures or delays.
 2. Make sure to provide useful sorting and filtering options.
-3. Your application should have a share link feature, so that people can share the result page with others via e.g. WhatsApp.
+3. Your application should include a share link feature that allows users to share the results page with others via platforms like WhatsApp. Even if a provider is down, the share links should still direct users to the shared offers.
 4. Credentials of the provider APIs should NEVER be leaked to the user.
 
 ### Optional Features
