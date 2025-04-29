@@ -1,0 +1,224 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "OpenAPI definition",
+    "version": "v0"
+  },
+  "servers": [
+    {
+      "url": "https://servus-speed.gendev7.check24.fun",
+      "description": "Generated server url"
+    }
+  ],
+  "paths": {
+    "/api/external/product-details/{product}": {
+      "post": {
+        "tags": [
+          "external-controller"
+        ],
+        "operationId": "getDetailedData",
+        "parameters": [
+          {
+            "name": "product",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/InternetAngeboteRequestData"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/DetailedResponseData"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/external/available-products": {
+      "post": {
+        "tags": [
+          "external-controller"
+        ],
+        "operationId": "getData",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/InternetAngeboteRequestData"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/InternetOffersResponseDataList"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "InternetAngeboteRequestData": {
+        "type": "object",
+        "properties": {
+          "address": {
+            "$ref": "#/components/schemas/RequestAddress"
+          }
+        },
+        "required": [
+          "address"
+        ]
+      },
+      "RequestAddress": {
+        "type": "object",
+        "properties": {
+          "strasse": {
+            "type": "string"
+          },
+          "hausnummer": {
+            "type": "string"
+          },
+          "postleitzahl": {
+            "type": "string"
+          },
+          "stadt": {
+            "type": "string"
+          },
+          "land": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "hausnummer",
+          "land",
+          "postleitzahl",
+          "stadt",
+          "strasse"
+        ]
+      },
+      "DetailedResponseData": {
+        "type": "object",
+        "properties": {
+          "servusSpeedProduct": {
+            "$ref": "#/components/schemas/ServusSpeedProduct"
+          }
+        },
+        "required": [
+          "servusSpeedProduct"
+        ]
+      },
+      "OfferPricingDetails": {
+        "type": "object",
+        "properties": {
+          "monthlyCostInCent": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "installationService": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "installationService",
+          "monthlyCostInCent"
+        ]
+      },
+      "OfferProductInfo": {
+        "type": "object",
+        "properties": {
+          "speed": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "contractDurationInMonths": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "connectionType": {
+            "type": "string"
+          },
+          "tv": {
+            "type": "string"
+          },
+          "limitFrom": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "maxAge": {
+            "type": "integer",
+            "format": "int32"
+          }
+        },
+        "required": [
+          "connectionType",
+          "contractDurationInMonths",
+          "speed"
+        ]
+      },
+      "ServusSpeedProduct": {
+        "type": "object",
+        "properties": {
+          "providerName": {
+            "type": "string"
+          },
+          "productInfo": {
+            "$ref": "#/components/schemas/OfferProductInfo"
+          },
+          "pricingDetails": {
+            "$ref": "#/components/schemas/OfferPricingDetails"
+          },
+          "discount": {
+            "type": "integer",
+            "format": "int32"
+          }
+        },
+        "required": [
+          "discount",
+          "pricingDetails",
+          "productInfo",
+          "providerName"
+        ]
+      },
+      "InternetOffersResponseDataList": {
+        "type": "object",
+        "properties": {
+          "availableProducts": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "required": [
+          "availableProducts"
+        ]
+      }
+    }
+  }
+}

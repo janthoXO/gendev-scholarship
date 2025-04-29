@@ -1,0 +1,150 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "OpenAPI definition",
+    "version": "v0"
+  },
+  "servers": [
+    {
+      "url": "https://pingperfect.gendev7.check24.fun",
+      "description": "Generated server url"
+    }
+  ],
+  "paths": {
+    "/internet/angebote/data": {
+      "post": {
+        "tags": [
+          "internet"
+        ],
+        "operationId": "getData",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CompareProductsRequestData"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/InternetProduct"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "CompareProductsRequestData": {
+        "type": "object",
+        "properties": {
+          "street": {
+            "type": "string"
+          },
+          "plz": {
+            "type": "string"
+          },
+          "houseNumber": {
+            "type": "string"
+          },
+          "city": {
+            "type": "string"
+          },
+          "wantsFiber": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "city",
+          "houseNumber",
+          "plz",
+          "street",
+          "wantsFiber"
+        ]
+      },
+      "InternetProduct": {
+        "type": "object",
+        "properties": {
+          "providerName": {
+            "type": "string"
+          },
+          "productInfo": {
+            "$ref": "#/components/schemas/ProductInfo"
+          },
+          "pricingDetails": {
+            "$ref": "#/components/schemas/PricingDetails"
+          }
+        },
+        "required": [
+          "providerName"
+        ]
+      },
+      "PricingDetails": {
+        "type": "object",
+        "properties": {
+          "monthlyCostInCent": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "installationService": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "installationService",
+          "monthlyCostInCent"
+        ]
+      },
+      "ProductInfo": {
+        "type": "object",
+        "properties": {
+          "speed": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "contractDurationInMonths": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "connectionType": {
+            "type": "string",
+            "enum": [
+              "DSL",
+              "CABLE",
+              "FIBER",
+              "MOBILE"
+            ]
+          },
+          "tv": {
+            "type": "string"
+          },
+          "limitFrom": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "maxAge": {
+            "type": "integer",
+            "format": "int32"
+          }
+        },
+        "required": [
+          "connectionType",
+          "contractDurationInMonths",
+          "speed"
+        ]
+      }
+    }
+  }
+}
