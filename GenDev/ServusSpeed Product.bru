@@ -1,0 +1,32 @@
+meta {
+  name: ServusSpeed Product
+  type: http
+  seq: 5
+}
+
+post {
+  url: https://servus-speed.gendev7.check24.fun/api/external/product-details/993037d37cb10b0d
+  body: json
+  auth: basic
+}
+
+headers {
+  X-Api-Key: {{byteme_key}}
+}
+
+auth:basic {
+  username: {{servus_username}}
+  password: {{servus_pass}}
+}
+
+body:json {
+  {
+    "address": {
+      "strasse": "Bahnhofstrasse",
+      "hausnummer": "10",
+      "postleitzahl": "82041",
+      "stadt": "Deisenhofen",
+      "land": "DE"
+    }
+  }
+}

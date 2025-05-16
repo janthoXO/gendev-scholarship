@@ -9,7 +9,7 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-func main(){
+func main() {
 	// Load environment variables
 	cfg := utils.LoadConfig()
 

@@ -1,0 +1,37 @@
+meta {
+  name: WebWunder
+  type: http
+  seq: 7
+}
+
+post {
+  url: https://webwunder.gendev7.check24.fun:443/endpunkte/soap/ws
+  body: xml
+  auth: inherit
+}
+
+headers {
+  X-Api-Key: {{webwunder_key}}
+  Content-Type: text/xml; charset=utf-8
+}
+
+body:xml {
+  <soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:gs="http://webwunder.gendev7.check24.fun/offerservice">
+      <soapenv:Header/>
+      <soapenv:Body>
+          <gs:legacyGetInternetOffers>
+              <gs:input>
+                  <gs:installation>false</gs:installation>
+                  <gs:connectionEnum>DSL</gs:connectionEnum>
+                  <gs:address>
+                      <gs:street>Bahnhofstrasse</gs:street>
+                      <gs:houseNumber>10</gs:houseNumber>
+                      <gs:city>Deisenhofen</gs:city>
+                      <gs:plz>82041</gs:plz>
+                      <gs:countryCode>DE</gs:countryCode>
+                  </gs:address>
+              </gs:input>
+          </gs:legacyGetInternetOffers>
+      </soapenv:Body>
+  </soapenv:Envelope>
+}

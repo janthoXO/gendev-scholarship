@@ -1,0 +1,20 @@
+meta {
+  name: VerbynDich
+  type: http
+  seq: 6
+}
+
+post {
+  url: https://verbyndich.gendev7.check24.fun/check24/data?apiKey={{verbyndich_key}}&page=2
+  body: text
+  auth: inherit
+}
+
+params:query {
+  apiKey: {{verbyndich_key}}
+  page: 2
+}
+
+body:text {
+  Landsberger Strasse;110;Muenchen;80339
+}

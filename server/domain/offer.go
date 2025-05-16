@@ -1,8 +1,9 @@
 package domain
 
 type Offer struct {
-	ProviderName string `json:"providerName"`
 	ProductInfo struct {
+		ProductID             int `json:"productId"`
+		ProviderName string `json:"providerName"`
 		Speed                 int    `json:"speed"`
 		ContractDurationInMonths int    `json:"contractDurationInMonths"`
 		ConnectionType        string `json:"connectionType"`
@@ -12,6 +13,9 @@ type Offer struct {
 	} `json:"productInfo"`
 	PricingDetails struct {
 		MonthlyCostInCent     int    `json:"monthlyCostInCent"`
-		InstallationService    string `json:"installationService"`
+		AfterTwoYearsMonthlyCost int   `json:"afterTwoYearsMonthlyCost"`
+		InstallationService    bool `json:"installationService"`
+		VoucherType         string `json:"voucherType"`
+		VoucherValue        int    `json:"voucherValue"`
 	} `json:"pricingDetails"`
 }

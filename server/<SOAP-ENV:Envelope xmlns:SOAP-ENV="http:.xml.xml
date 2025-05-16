@@ -1,0 +1,97 @@
+<SOAP-ENV:Envelope xmlns:SOAP-ENV="http://schemas.xmlsoap.org/soap/envelope/">
+    <SOAP-ENV:Header/>
+    <SOAP-ENV:Body>
+        <Output xmlns:ns2="http://webwunder.gendev7.check24.fun/offerservice">
+            <ns2:products>
+                <ns2:productId>401</ns2:productId>
+                <ns2:providerName>WebWunder Starter 20</ns2:providerName>
+                <ns2:productInfo>
+                    <ns2:speed>20</ns2:speed>
+                    <ns2:monthlyCostInCent>2224</ns2:monthlyCostInCent>
+                    <ns2:monthlyCostInCentFrom25thMonth>2124</ns2:monthlyCostInCentFrom25thMonth>
+                    <ns2:voucher xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:type="ns2:percentageVoucher">
+                        <ns2:percentage>3</ns2:percentage>
+                        <ns2:maxDiscountInCent>10753</ns2:maxDiscountInCent>
+                    </ns2:voucher>
+                    <ns2:contractDurationInMonths>12</ns2:contractDurationInMonths>
+                    <ns2:connectionType>DSL</ns2:connectionType>
+                </ns2:productInfo>
+            </ns2:products>
+            <ns2:products>
+                <ns2:productId>402</ns2:productId>
+                <ns2:providerName>WebWunder Starter 30</ns2:providerName>
+                <ns2:productInfo>
+                    <ns2:speed>30</ns2:speed>
+                    <ns2:monthlyCostInCent>2424</ns2:monthlyCostInCent>
+                    <ns2:monthlyCostInCentFrom25thMonth>2424</ns2:monthlyCostInCentFrom25thMonth>
+                    <ns2:voucher xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:type="ns2:percentageVoucher">
+                        <ns2:percentage>3</ns2:percentage>
+                        <ns2:maxDiscountInCent>10753</ns2:maxDiscountInCent>
+                    </ns2:voucher>
+                    <ns2:contractDurationInMonths>12</ns2:contractDurationInMonths>
+                    <ns2:connectionType>DSL</ns2:connectionType>
+                </ns2:productInfo>
+            </ns2:products>
+            <ns2:products>
+                <ns2:productId>403</ns2:productId>
+                <ns2:providerName>WebWunder Starter 40</ns2:providerName>
+                <ns2:productInfo>
+                    <ns2:speed>40</ns2:speed>
+                    <ns2:monthlyCostInCent>2624</ns2:monthlyCostInCent>
+                    <ns2:monthlyCostInCentFrom25thMonth>2724</ns2:monthlyCostInCentFrom25thMonth>
+                    <ns2:voucher xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:type="ns2:percentageVoucher">
+                        <ns2:percentage>3</ns2:percentage>
+                        <ns2:maxDiscountInCent>10753</ns2:maxDiscountInCent>
+                    </ns2:voucher>
+                    <ns2:contractDurationInMonths>12</ns2:contractDurationInMonths>
+                    <ns2:connectionType>DSL</ns2:connectionType>
+                </ns2:productInfo>
+            </ns2:products>
+            <ns2:products>
+                <ns2:productId>404</ns2:productId>
+                <ns2:providerName>WebWunder Standard 40</ns2:providerName>
+                <ns2:productInfo>
+                    <ns2:speed>40</ns2:speed>
+                    <ns2:monthlyCostInCent>2824</ns2:monthlyCostInCent>
+                    <ns2:monthlyCostInCentFrom25thMonth>3024</ns2:monthlyCostInCentFrom25thMonth>
+                    <ns2:voucher xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:type="ns2:percentageVoucher">
+                        <ns2:percentage>3</ns2:percentage>
+                        <ns2:maxDiscountInCent>10753</ns2:maxDiscountInCent>
+                    </ns2:voucher>
+                    <ns2:contractDurationInMonths>12</ns2:contractDurationInMonths>
+                    <ns2:connectionType>DSL</ns2:connectionType>
+                </ns2:productInfo>
+            </ns2:products>
+            <ns2:products>
+                <ns2:productId>405</ns2:productId>
+                <ns2:providerName>WebWunder Standard 50</ns2:providerName>
+                <ns2:productInfo>
+                    <ns2:speed>50</ns2:speed>
+                    <ns2:monthlyCostInCent>3024</ns2:monthlyCostInCent>
+                    <ns2:monthlyCostInCentFrom25thMonth>2824</ns2:monthlyCostInCentFrom25thMonth>
+                    <ns2:voucher xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:type="ns2:percentageVoucher">
+                        <ns2:percentage>3</ns2:percentage>
+                        <ns2:maxDiscountInCent>10753</ns2:maxDiscountInCent>
+                    </ns2:voucher>
+                    <ns2:contractDurationInMonths>12</ns2:contractDurationInMonths>
+                    <ns2:connectionType>DSL</ns2:connectionType>
+                </ns2:productInfo>
+            </ns2:products>
+            <ns2:products>
+                <ns2:productId>406</ns2:productId>
+                <ns2:providerName>WebWunder Standard 60</ns2:providerName>
+                <ns2:productInfo>
+                    <ns2:speed>60</ns2:speed>
+                    <ns2:monthlyCostInCent>3224</ns2:monthlyCostInCent>
+                    <ns2:monthlyCostInCentFrom25thMonth>3124</ns2:monthlyCostInCentFrom25thMonth>
+                    <ns2:voucher xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:type="ns2:percentageVoucher">
+                        <ns2:percentage>3</ns2:percentage>
+                        <ns2:maxDiscountInCent>10753</ns2:maxDiscountInCent>
+                    </ns2:voucher>
+                    <ns2:contractDurationInMonths>12</ns2:contractDurationInMonths>
+                    <ns2:connectionType>DSL</ns2:connectionType>
+                </ns2:productInfo>
+            </ns2:products>
+        </Output>
+    </SOAP-ENV:Body>
+</SOAP-ENV:Envelope>

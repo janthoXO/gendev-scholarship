@@ -1,0 +1,22 @@
+meta {
+  name: ByteMe
+  type: http
+  seq: 3
+}
+
+get {
+  url: https://byteme.gendev7.check24.fun/app/api/products/data?street=Bahnhofstrasse&houseNumber=10&city=Deisenhofen&plz=82041
+  body: none
+  auth: inherit
+}
+
+params:query {
+  street: Bahnhofstrasse
+  houseNumber: 10
+  city: Deisenhofen
+  plz: 82041
+}
+
+headers {
+  X-Api-Key: {{byteme_key}}
+}

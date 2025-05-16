@@ -5,7 +5,14 @@ meta {
 }
 
 get {
-  url: {{api_url}}/offers
+  url: {{api_url}}/offers?street=Bahnhofstrasse&houseNumber=10&city=Deisenhofen&plz=82041
   body: none
   auth: inherit
+}
+
+params:query {
+  street: Bahnhofstrasse
+  houseNumber: 10
+  city: Deisenhofen
+  plz: 82041
 }
