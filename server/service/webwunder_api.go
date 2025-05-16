@@ -9,8 +9,6 @@ import (
 	"net/http"
 	"server/domain"
 	"server/utils"
-
-	log "github.com/sirupsen/logrus"
 )
 
 type WebWunderApi struct{}
