@@ -6,8 +6,6 @@ import (
 	"server/utils"
 	"sync"
 	"time"
-
-	log "github.com/sirupsen/logrus"
 )
 
 type OfferServiceImpl struct{}
@@ -20,59 +18,49 @@ var providers = []InternetProviderAPI{
 	&WebWunderApi{},
 }
 
-func (service OfferServiceImpl) FetchOffers(address domain.Address) (query domain.Query, err error) {
-	query.Address = address
-	query.Timestamp = time.Now()
-	query.HelperQueryHash = query.GetHash()
+func (service OfferServiceImpl) FetchOffersStream(ctx context.Context, address domain.Address, offersChannel chan<- domain.Offer, errChannel chan<- error) {
+	// Create a parent context with the API timeout as a control mechanism
+	// Using a separate context instead of wrapping the incoming one to avoid premature cancellation
+	timeoutCtx, timeoutCancel := context.WithTimeout(context.Background(), time.Duration(utils.Cfg.Server.ApiTimeout)*time.Second)
 
-	// Fetch offers from all providers concurrently
 	var wg sync.WaitGroup
-	offersChan := make(chan []domain.Offer, len(providers))
-	errorsChan := make(chan error, len(providers))
 
-	// Create a parent context that will be passed to all provider API calls
-	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(utils.Cfg.Server.ApiTimeout)*time.Second)
-	defer cancel() // Ensure all child operations are canceled when this function returns
-
+	// Start goroutines for each provider
 	for _, provider := range providers {
 		wg.Add(1)
 		go func(p InternetProviderAPI) {
 			defer wg.Done()
 
-			done := make(chan bool)
-			var offers []domain.Offer
-			var err error
+			// Create a provider-specific context that gets canceled either by the timeout or the original context
+			providerCtx, providerCancel := context.WithCancel(context.Background())
+			defer providerCancel()
 
+			// Monitor both contexts
 			go func() {
-				// Pass the parent context to GetOffers so it can be used in HTTP requests
-				offers, err = p.GetOffers(ctx, address)
-				done <- true
+				select {
+				case <-ctx.Done():
+					// The original request context was canceled (e.g., client disconnected)
+					providerCancel()
+				case <-timeoutCtx.Done():
+					// The timeout occurred
+					providerCancel()
+				}
 			}()
 
-			select {
-			case <-done:
-				if err != nil {
-					log.WithError(err).WithField("provider", p.GetProviderName()).Warn("Provider API error")
-					errorsChan <- err
-					return
-				}
-				offersChan <- offers
-			case <-ctx.Done():
-				log.WithField("provider", p.GetProviderName()).Warn("Provider API timeout")
-				errorsChan <- ctx.Err()
-			}
+			// Call the streaming method for each provider
+			p.GetOffersStream(providerCtx, address, offersChannel, errChannel)
 		}(provider)
 	}
 
-	// Wait for all goroutines to complete
-	wg.Wait()
-	close(offersChan)
-	close(errorsChan)
+	// Wait for all providers to complete in a separate goroutine
+	go func() {
+		wg.Wait()
 
-	// Collect all offers
-	for offers := range offersChan {
-		query.Offers = append(query.Offers, offers...)
-	}
+		// Close channels when all providers are done
+		close(offersChannel)
+		close(errChannel)
 
-	return query, nil
+		// Cleanup
+		timeoutCancel()
+	}()
 }

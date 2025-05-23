@@ -100,17 +100,17 @@ type WebWunderSoapVoucher struct {
 
 const (
 	// connection types
-	ConnectionTypeDSL  = "DSL"
-	ConnectionTypeFiber = "FIBER"
-	ConnectionTypeCable = "CABLE"
+	ConnectionTypeDSL    = "DSL"
+	ConnectionTypeFiber  = "FIBER"
+	ConnectionTypeCable  = "CABLE"
 	ConnectionTypeMobile = "MOBILE"
 )
 
-func (api *WebWunderApi) GetOffers(ctx context.Context, address domain.Address) (offers []domain.Offer, err error) {
+func (api *WebWunderApi) GetOffersStream(ctx context.Context, address domain.Address, offersChannel chan<- domain.Offer, errChannel chan<- error) {
 	// TODO if no connection type specified, query all in parallel
 
 	// TODO if installation not specified, try both per connection type
-	
+
 	// Create SOAP request envelope
 	soapEnvelope := WebWunderSoapEnvelope{
 		SoapNS: "http://schemas.xmlsoap.org/soap/envelope/",
@@ -136,7 +136,12 @@ func (api *WebWunderApi) GetOffers(ctx context.Context, address domain.Address) 
 	// Marshal the request to XML
 	requestXML, err := xml.MarshalIndent(soapEnvelope, "", "  ")
 	if err != nil {
-		return nil, fmt.Errorf("failed to marshal SOAP request: %w", err)
+		select {
+		case <-ctx.Done():
+			return
+		case errChannel <- fmt.Errorf("%s: failed to marshal SOAP request: %w", api.GetProviderName(), err):
+		}
+		return
 	}
 
 	// Create XML declaration and prepend to the request
@@ -146,7 +151,12 @@ func (api *WebWunderApi) GetOffers(ctx context.Context, address domain.Address) 
 	// Create HTTP request with the SOAP payload and context
 	req, err := http.NewRequestWithContext(ctx, "POST", "https://webwunder.gendev7.check24.fun:443/endpunkte/soap/ws", bytes.NewReader(requestXML))
 	if err != nil {
-		return nil, fmt.Errorf("failed to create request: %w", err)
+		select {
+		case <-ctx.Done():
+			return
+		case errChannel <- fmt.Errorf("%s: failed to create request: %w", api.GetProviderName(), err):
+		}
+		return
 	}
 
 	// Set necessary headers
@@ -158,31 +168,46 @@ func (api *WebWunderApi) GetOffers(ctx context.Context, address domain.Address) 
 	client := &http.Client{}
 	resp, err := client.Do(req)
 	if err != nil {
-		return nil, fmt.Errorf("failed to send request: %w", err)
+		select {
+		case <-ctx.Done():
+			return
+		case errChannel <- fmt.Errorf("%s: failed to send request: %w", api.GetProviderName(), err):
+		}
+		return
 	}
 	defer resp.Body.Close()
 
 	// Check the response status code
 	if resp.StatusCode != http.StatusOK {
 		bodyBytes, _ := io.ReadAll(resp.Body)
-		return nil, fmt.Errorf("API returned non-OK status: %d, body: %s", resp.StatusCode, string(bodyBytes))
-	}
-
-	// Check for context cancellation
-	if ctx.Err() != nil {
-		return nil, ctx.Err()
+		select {
+		case <-ctx.Done():
+			return
+		case errChannel <- fmt.Errorf("%s: API returned non-OK status: %d, body: %s", api.GetProviderName(), resp.StatusCode, string(bodyBytes)):
+		}
+		return
 	}
 
 	// Read and parse the XML response
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
-		return nil, fmt.Errorf("failed to read response body: %w", err)
+		select {
+		case <-ctx.Done():
+			return
+		case errChannel <- fmt.Errorf("%s: failed to read response body: %w", api.GetProviderName(), err):
+		}
+		return
 	}
 
 	// Unmarshal the XML response
 	var soapResponse WebWunderSoapResponse
 	if err := xml.Unmarshal(body, &soapResponse); err != nil {
-		return nil, fmt.Errorf("failed to unmarshal SOAP response: %w", err)
+		select {
+		case <-ctx.Done():
+			return
+		case errChannel <- fmt.Errorf("%s: failed to unmarshal SOAP response: %w", api.GetProviderName(), err):
+		}
+		return
 	}
 
 	// Convert the SOAP response products to domain offers
@@ -190,10 +215,12 @@ func (api *WebWunderApi) GetOffers(ctx context.Context, address domain.Address) 
 		offer := api.soapProductToOffer(product)
 		offer.Provider = api.GetProviderName()
 		offer.HelperOfferHash = offer.GetHash()
-		offers = append(offers, offer)
+		select {
+		case <-ctx.Done():
+			return
+		case offersChannel <- offer:
+		}
 	}
-
-	return offers, nil
 }
 
 // soapProductToOffer converts a WebWunder SOAP product to a domain.Offer

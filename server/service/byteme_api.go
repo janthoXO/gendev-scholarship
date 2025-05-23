@@ -12,12 +12,17 @@ import (
 
 type ByteMeApi struct{}
 
-func (api *ByteMeApi) GetOffers(ctx context.Context, address domain.Address) (offers []domain.Offer, err error) {
+func (api *ByteMeApi) GetOffersStream(ctx context.Context, address domain.Address, offersChannel chan<- domain.Offer, errChannel chan<- error) {
 	// Construct the API endpoint URL
 	baseURL := "https://byteme.gendev7.check24.fun/app/api/products/data"
 	u, err := url.Parse(baseURL)
 	if err != nil {
-		return nil, fmt.Errorf("failed to parse URL: %w", err)
+		select {
+		case <-ctx.Done():
+			return
+		case errChannel <- fmt.Errorf("%s: failed to parse URL: %w", api.GetProviderName(), err):
+		}
+		return
 	}
 
 	q := u.Query()
@@ -29,7 +34,12 @@ func (api *ByteMeApi) GetOffers(ctx context.Context, address domain.Address) (of
 	// Send the GET request with X-API-Key header
 	req, err := http.NewRequestWithContext(ctx, "GET", u.String(), nil)
 	if err != nil {
-		return nil, fmt.Errorf("failed to create request: %w", err)
+		select {
+		case <-ctx.Done():
+			return
+		case errChannel <- fmt.Errorf("%s: failed to create request: %w", api.GetProviderName(), err):
+		}
+		return
 	}
 	req.Header.Set("X-Api-Key", utils.Cfg.ByteMe.ApiKey)
 
@@ -37,25 +47,45 @@ func (api *ByteMeApi) GetOffers(ctx context.Context, address domain.Address) (of
 	client := &http.Client{}
 	resp, err := client.Do(req)
 	if err != nil {
-		return nil, fmt.Errorf("failed to send request: %w", err)
+		select {
+		case <-ctx.Done():
+			return
+		case errChannel <- fmt.Errorf("%s: failed to send request: %w", api.GetProviderName(), err):
+		}
+		return
 	}
 	defer resp.Body.Close()
 
 	// Check the response status code
 	if resp.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("API returned non-OK status: %d", resp.StatusCode)
+		select {
+		case <-ctx.Done():
+			return
+		case errChannel <- fmt.Errorf("%s, API returned non-OK status: %d", api.GetProviderName(), resp.StatusCode):
+		}
+		return
 	}
 
 	// Read the CSV response
 	bodyBytes, err := io.ReadAll(resp.Body)
 	if err != nil {
-		return nil, fmt.Errorf("failed to read response body: %w", err)
+		select {
+		case <-ctx.Done():
+			return
+		case errChannel <- fmt.Errorf("%s: failed to read response body: %w", api.GetProviderName(), err):
+		}
+		return
 	}
 
 	// Convert CSV to a slice of maps
 	csvMaps, err := utils.CSVToMap(bodyBytes)
 	if err != nil {
-		return nil, fmt.Errorf("failed to parse CSV data: %w", err)
+		select {
+		case <-ctx.Done():
+			return
+		case errChannel <- fmt.Errorf("%s: failed to parse CSV data: %w", api.GetProviderName(), err):
+		}
+		return
 	}
 
 	// Convert maps to domain.Offer objects
@@ -63,10 +93,12 @@ func (api *ByteMeApi) GetOffers(ctx context.Context, address domain.Address) (of
 		offer := api.mapToOffer(item)
 		offer.Provider = api.GetProviderName()
 		offer.HelperOfferHash = offer.GetHash()
-		offers = append(offers, offer)
+		select {
+		case <-ctx.Done():
+			return
+		case offersChannel <- offer:
+		}
 	}
-
-	return offers, nil
 }
 
 // mapToOffer converts a map with properly typed values to a domain.Offer object

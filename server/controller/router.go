@@ -1,9 +1,10 @@
 package controller
 
 import (
+	"encoding/json"
 	"net/http"
 	"server/domain"
-	"server/service"	
+	"server/service"
 
 	"github.com/gin-gonic/gin"
 	log "github.com/sirupsen/logrus"
@@ -54,13 +55,82 @@ func FetchOffers(c *gin.Context) {
 		ZipCode:     params.ZipCode,
 	}
 
-	query, err := offerService.FetchOffers(address)
-	if err != nil {
-		log.WithError(err).Warn("Failed to fetch offers")
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to fetch offers"})
+	// Set response headers for streaming
+	c.Header("Content-Type", "application/json")
+	c.Header("Cache-Control", "no-cache")
+	c.Header("Connection", "keep-alive")
+	c.Header("Access-Control-Allow-Origin", "*")
+
+	// Set status for successful response
+	c.Status(http.StatusOK)
+
+	// Create channels for streaming offers
+	offersChannel := make(chan domain.Offer)
+	errChannel := make(chan error)
+
+	// Start the streaming service (it will close the channels when done)
+	offerService.FetchOffersStream(c.Request.Context(), address, offersChannel, errChannel)
+
+	// Stream offers to the client
+	writer := c.Writer
+	flusher, ok := writer.(http.Flusher)
+	if !ok {
+		log.Warn("Writer doesn't support flushing")
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Streaming not supported"})
 		return
 	}
 
-	// Return all query with offers
-	c.JSON(http.StatusOK, query)
+	// Stream the response as JSON array manually
+	writer.Write([]byte("["))
+	flusher.Flush()
+
+	first := true
+	processingComplete := make(chan bool)
+
+	// Process offers and errors
+	go func() {
+		for {
+			select {
+			case offer, ok := <-offersChannel:
+				if !ok {
+					// Channel was closed, which means all providers are done
+					processingComplete <- true
+					return
+				}
+
+				// Add comma separator if not the first offer
+				if !first {
+					writer.Write([]byte(","))
+				} else {
+					first = false
+				}
+
+				// Marshal and write the offer
+				if offerJSON, err := json.Marshal(offer); err == nil {
+					writer.Write(offerJSON)
+					flusher.Flush()
+				} else {
+					log.WithError(err).Warn("Failed to marshal offer")
+				}
+
+			case err, ok := <-errChannel:
+				if !ok {
+					continue
+				}
+				log.WithError(err).Warn("Error while fetching offers")
+			}
+		}
+	}()
+
+	// Wait for processing completion or client disconnect
+	select {
+	case <-processingComplete:
+		// Processing completed (offers channel was closed)
+		log.Info("Processing completed - all providers finished")
+		writer.Write([]byte("]"))
+		flusher.Flush()
+	case <-c.Request.Context().Done():
+		log.Info("Client disconnected")
+		return
+	}
 }

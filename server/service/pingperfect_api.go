@@ -42,7 +42,7 @@ type PingPerfectProduct struct {
 	} `json:"pricingDetails,omitempty"`
 }
 
-func (api *PingPerfectApi) GetOffers(ctx context.Context, address domain.Address) (offers []domain.Offer, err error) {
+func (api *PingPerfectApi) GetOffersStream(ctx context.Context, address domain.Address, offersChannel chan<- domain.Offer, errChannel chan<- error) {
 	// Create request payload
 	requestData := PingPerfectRequest{
 		Street:      address.Street,
@@ -55,7 +55,12 @@ func (api *PingPerfectApi) GetOffers(ctx context.Context, address domain.Address
 	// Convert request to JSON
 	requestBody, err := json.Marshal(requestData)
 	if err != nil {
-		return nil, fmt.Errorf("failed to marshal request data: %w", err)
+		select {
+		case <-ctx.Done():
+			return
+		case errChannel <- fmt.Errorf("%s: failed to marshal request data: %w", api.GetProviderName(), err):
+		}
+		return
 	}
 
 	// Generate timestamp and signature
@@ -65,7 +70,12 @@ func (api *PingPerfectApi) GetOffers(ctx context.Context, address domain.Address
 	// Create HTTP request with context
 	req, err := http.NewRequestWithContext(ctx, "POST", "https://pingperfect.gendev7.check24.fun/internet/angebote/data", bytes.NewBuffer(requestBody))
 	if err != nil {
-		return nil, fmt.Errorf("failed to create request: %w", err)
+		select {
+		case <-ctx.Done():
+			return
+		case errChannel <- fmt.Errorf("%s: failed to create request: %w", api.GetProviderName(), err):
+		}
+		return
 	}
 
 	// Set headers
@@ -78,20 +88,35 @@ func (api *PingPerfectApi) GetOffers(ctx context.Context, address domain.Address
 	client := &http.Client{}
 	resp, err := client.Do(req)
 	if err != nil {
-		return nil, fmt.Errorf("failed to send request: %w", err)
+		select {
+		case <-ctx.Done():
+			return
+		case errChannel <- fmt.Errorf("%s: failed to send request: %w", api.GetProviderName(), err):
+		}
+		return
 	}
 	defer resp.Body.Close()
 
 	// Check response status
 	if resp.StatusCode != http.StatusOK {
 		bodyBytes, _ := io.ReadAll(resp.Body)
-		return nil, fmt.Errorf("API returned non-OK status: %d, body: %s", resp.StatusCode, string(bodyBytes))
+		select {
+		case <-ctx.Done():
+			return
+		case errChannel <- fmt.Errorf("%s: API returned non-OK status: %d, body: %s", api.GetProviderName(), resp.StatusCode, string(bodyBytes)):
+		}
+		return
 	}
 
 	// Parse response
 	var products []PingPerfectProduct
 	if err := json.NewDecoder(resp.Body).Decode(&products); err != nil {
-		return nil, fmt.Errorf("failed to decode response: %w", err)
+		select {
+		case <-ctx.Done():
+			return
+		case errChannel <- fmt.Errorf("%s: failed to decode response: %w", api.GetProviderName(), err):
+		}
+		return
 	}
 
 	// Convert to domain.Offer objects
@@ -99,10 +124,12 @@ func (api *PingPerfectApi) GetOffers(ctx context.Context, address domain.Address
 		offer := api.productToOffer(product)
 		offer.Provider = api.GetProviderName()
 		offer.HelperOfferHash = offer.GetHash()
-		offers = append(offers, offer)
+		select {
+		case <-ctx.Done():
+			return
+		case offersChannel <- offer:
+		}
 	}
-
-	return offers, nil
 }
 
 // productToOffer converts a PingPerfectProduct to a domain.Offer object

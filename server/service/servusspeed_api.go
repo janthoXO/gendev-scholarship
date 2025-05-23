@@ -52,17 +52,20 @@ type ServusSpeedProductResponse struct {
 	} `json:"servusSpeedProduct"`
 }
 
-func (api *ServusSpeedApi) GetOffers(ctx context.Context, address domain.Address) (offers []domain.Offer, err error) {
+func (api *ServusSpeedApi) GetOffersStream(ctx context.Context, address domain.Address, offersChannel chan<- domain.Offer, errChannel chan<- error) {
 	// Step 1: Get the list of available product IDs
 	productIDs, err := api.getAvailableProducts(ctx, address)
 	if err != nil {
-		return nil, err
+		select {
+		case <-ctx.Done():
+			return
+		case errChannel <- err:
+		}
+		return
 	}
 
 	// Step 2: Get the details for each product ID in parallel
 	var wg sync.WaitGroup
-	offerChan := make(chan domain.Offer, len(productIDs))
-	errChan := make(chan error, len(productIDs))
 
 	for _, productID := range productIDs {
 		wg.Add(1)
@@ -75,7 +78,11 @@ func (api *ServusSpeedApi) GetOffers(ctx context.Context, address domain.Address
 				log.WithError(err).WithField("productID", id).
 					WithField("provider", "ServusSpeed").
 					Warn("Failed to get product details")
-				errChan <- err
+				select {
+				case <-ctx.Done():
+					return
+				case errChannel <- err:
+				}
 				return
 			}
 
@@ -83,23 +90,18 @@ func (api *ServusSpeedApi) GetOffers(ctx context.Context, address domain.Address
 			offer := api.convertToOffer(product)
 			offer.Provider = api.GetProviderName()
 			offer.HelperOfferHash = offer.GetHash()
-			offerChan <- offer
+
+			// Write directly to the passed channel
+			select {
+			case <-ctx.Done():
+				return
+			case offersChannel <- offer:
+			}
 		}(productID)
 	}
 
 	// Wait for all goroutines to complete
-	go func() {
-		wg.Wait()
-		close(offerChan)
-		close(errChan)
-	}()
-
-	// Collect all offers
-	for offer := range offerChan {
-		offers = append(offers, offer)
-	}
-
-	return offers, nil
+	wg.Wait()
 }
 
 func (api *ServusSpeedApi) getAvailableProducts(ctx context.Context, address domain.Address) ([]string, error) {
