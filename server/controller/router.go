@@ -68,8 +68,8 @@ func FetchOffers(c *gin.Context) {
 	offersChannel := make(chan domain.Offer)
 	errChannel := make(chan error)
 
-	// Start the streaming service (it will close the channels when done)
-	offerService.FetchOffersStream(c.Request.Context(), address, offersChannel, errChannel)
+	// Start the streaming service and get the completion signal
+	completionSignal := offerService.FetchOffersStream(c.Request.Context(), address, offersChannel, errChannel)
 
 	// Stream offers to the client
 	writer := c.Writer
@@ -85,7 +85,9 @@ func FetchOffers(c *gin.Context) {
 	flusher.Flush()
 
 	first := true
-	processingComplete := make(chan bool)
+
+	// Create a separate done channel for the streaming goroutine
+	streamingDone := make(chan struct{})
 
 	// Process offers and errors
 	go func() {
@@ -93,8 +95,12 @@ func FetchOffers(c *gin.Context) {
 			select {
 			case offer, ok := <-offersChannel:
 				if !ok {
-					// Channel was closed, which means all providers are done
-					processingComplete <- true
+					// offersChannel closed, exit the loop
+					log.Debug("Offers channel closed, finishing stream")
+					writer.Write([]byte("]"))
+					flusher.Flush()
+					// Signal that we've finished writing the stream
+					close(streamingDone)
 					return
 				}
 
@@ -115,22 +121,38 @@ func FetchOffers(c *gin.Context) {
 
 			case err, ok := <-errChannel:
 				if !ok {
+					// errChannel closed but continue waiting for offers
 					continue
 				}
 				log.WithError(err).Warn("Error while fetching offers")
+
+			case <-c.Request.Context().Done():
+				log.Debug("Client disconnected, exiting streaming goroutine")
+				writer.Write([]byte("]"))
+				flusher.Flush()
+				// Signal that we've finished writing the stream
+				close(streamingDone)
+				return
 			}
 		}
 	}()
 
-	// Wait for processing completion or client disconnect
+	// Wait for providers completion, processing completion or client disconnect
 	select {
-	case <-processingComplete:
-		// Processing completed (offers channel was closed)
-		log.Info("Processing completed - all providers finished")
-		writer.Write([]byte("]"))
-		flusher.Flush()
+	case <-completionSignal:
+		// All providers have completed
+		log.Debug("All providers have completed")
+
+		// Close the channels as the router is responsible for them
+		close(offersChannel)
+		close(errChannel)
+
+		// Wait for the streaming goroutine to finish writing
+		<-streamingDone
+		log.Debug("Stream successfully closed")
+
 	case <-c.Request.Context().Done():
-		log.Info("Client disconnected")
+		log.Debug("Client disconnected")
 		return
 	}
 }

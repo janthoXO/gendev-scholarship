@@ -18,10 +18,13 @@ var providers = []InternetProviderAPI{
 	&WebWunderApi{},
 }
 
-func (service OfferServiceImpl) FetchOffersStream(ctx context.Context, address domain.Address, offersChannel chan<- domain.Offer, errChannel chan<- error) {
+func (service OfferServiceImpl) FetchOffersStream(ctx context.Context, address domain.Address, offersChannel chan<- domain.Offer, errChannel chan<- error) <-chan struct{} {
 	// Create a parent context with the API timeout as a control mechanism
-	// Using a separate context instead of wrapping the incoming one to avoid premature cancellation
-	timeoutCtx, timeoutCancel := context.WithTimeout(context.Background(), time.Duration(utils.Cfg.Server.ApiTimeout)*time.Second)
+	// We derive from the incoming context so that client disconnects are properly propagated
+	timeoutCtx, timeoutCancel := context.WithTimeout(ctx, time.Duration(utils.Cfg.Server.ApiTimeout)*time.Second)
+
+	// Create a done channel to signal completion
+	done := make(chan struct{})
 
 	var wg sync.WaitGroup
 
@@ -31,20 +34,16 @@ func (service OfferServiceImpl) FetchOffersStream(ctx context.Context, address d
 		go func(p InternetProviderAPI) {
 			defer wg.Done()
 
-			// Create a provider-specific context that gets canceled either by the timeout or the original context
-			providerCtx, providerCancel := context.WithCancel(context.Background())
+			// Create a provider-specific context derived from the timeout context
+			// This ensures proper propagation of cancellation
+			providerCtx, providerCancel := context.WithCancel(timeoutCtx)
 			defer providerCancel()
 
-			// Monitor both contexts
+			// Also monitor the original context for client disconnects
 			go func() {
-				select {
-				case <-ctx.Done():
-					// The original request context was canceled (e.g., client disconnected)
-					providerCancel()
-				case <-timeoutCtx.Done():
-					// The timeout occurred
-					providerCancel()
-				}
+				<-ctx.Done()
+				// The original request context was canceled (e.g., client disconnected)
+				providerCancel()
 			}()
 
 			// Call the streaming method for each provider
@@ -56,11 +55,13 @@ func (service OfferServiceImpl) FetchOffersStream(ctx context.Context, address d
 	go func() {
 		wg.Wait()
 
-		// Close channels when all providers are done
-		close(offersChannel)
-		close(errChannel)
+		// Signal that all providers are done
+		close(done)
 
 		// Cleanup
 		timeoutCancel()
 	}()
+
+	// Return the done channel so the caller can wait for completion
+	return done
 }
