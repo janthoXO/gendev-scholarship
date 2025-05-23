@@ -81,6 +81,7 @@ func (api *ServusSpeedApi) GetOffers(ctx context.Context, address domain.Address
 
 			// Convert to domain.Offer
 			offer := api.convertToOffer(product)
+			offer.Provider = api.GetProviderName()
 			offerChan <- offer
 		}(productID)
 	}
@@ -210,18 +211,18 @@ func (api *ServusSpeedApi) getProductDetails(ctx context.Context, productID stri
 func (api *ServusSpeedApi) convertToOffer(product *ServusSpeedProductResponse) domain.Offer {
 	offer := domain.Offer{}
 
-	offer.ProductInfo.ProviderName = product.ServusSpeedProduct.ProviderName
-	offer.ProductInfo.Speed = product.ServusSpeedProduct.ProductInfo.Speed
-	offer.ProductInfo.ContractDurationInMonths = product.ServusSpeedProduct.ProductInfo.ContractDurationInMonths
-	offer.ProductInfo.ConnectionType = product.ServusSpeedProduct.ProductInfo.ConnectionType
-	offer.ProductInfo.Tv = product.ServusSpeedProduct.ProductInfo.Tv
-	offer.ProductInfo.LimitFrom = product.ServusSpeedProduct.ProductInfo.LimitFrom
-	offer.ProductInfo.MaxAge = product.ServusSpeedProduct.ProductInfo.MaxAge
+	offer.ProductName = product.ServusSpeedProduct.ProviderName
+	offer.Speed = product.ServusSpeedProduct.ProductInfo.Speed
+	offer.ContractDurationInMonths = product.ServusSpeedProduct.ProductInfo.ContractDurationInMonths
+	offer.ConnectionType = product.ServusSpeedProduct.ProductInfo.ConnectionType
+	offer.Tv = product.ServusSpeedProduct.ProductInfo.Tv
+	offer.LimitInGb = product.ServusSpeedProduct.ProductInfo.LimitFrom
+	offer.MaxAgePerson = product.ServusSpeedProduct.ProductInfo.MaxAge
 
 	// Handle the discount
 	monthlyCostWithDiscount := product.ServusSpeedProduct.PricingDetails.MonthlyCostInCent - product.ServusSpeedProduct.Discount
-	offer.PricingDetails.MonthlyCostInCent = monthlyCostWithDiscount
-	offer.PricingDetails.InstallationService = product.ServusSpeedProduct.PricingDetails.InstallationService
+	offer.MonthlyCostInCent = monthlyCostWithDiscount
+	offer.InstallationService = product.ServusSpeedProduct.PricingDetails.InstallationService
 
 	return offer
 }

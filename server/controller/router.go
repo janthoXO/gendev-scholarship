@@ -54,18 +54,13 @@ func FetchOffers(c *gin.Context) {
 		ZipCode:     params.ZipCode,
 	}
 
-	allOffers, err := offerService.FetchOffers(address)
+	query, err := offerService.FetchOffers(address)
 	if err != nil {
 		log.WithError(err).Warn("Failed to fetch offers")
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to fetch offers"})
 		return
 	}
 
-	// Handle the case when no offers are available
-	if len(allOffers) == 0 {
-		log.Warn("No offers available from any provider")
-	}
-
-	// Return all offers
-	c.JSON(http.StatusOK, allOffers)
+	// Return all query with offers
+	c.JSON(http.StatusOK, query)
 }

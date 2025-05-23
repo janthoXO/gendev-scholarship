@@ -20,7 +20,11 @@ var providers = []InternetProviderAPI{
 	&WebWunderApi{},
 }
 
-func (service OfferServiceImpl) FetchOffers(address domain.Address) (allOffers []domain.Offer, err error) {
+func (service OfferServiceImpl) FetchOffers(address domain.Address) (query domain.Query, err error) {
+	query.Address = address
+	query.Timestamp = time.Now()
+	query.HelperQueryHash = query.GetHash()
+
 	// Fetch offers from all providers concurrently
 	var wg sync.WaitGroup
 	offersChan := make(chan []domain.Offer, len(providers))
@@ -67,8 +71,8 @@ func (service OfferServiceImpl) FetchOffers(address domain.Address) (allOffers [
 
 	// Collect all offers
 	for offers := range offersChan {
-		allOffers = append(allOffers, offers...)
+		query.Offers = append(query.Offers, offers...)
 	}
 
-	return allOffers, nil
+	return query, nil
 }

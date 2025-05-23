@@ -188,6 +188,7 @@ func (api *WebWunderApi) GetOffers(ctx context.Context, address domain.Address) 
 	// Convert the SOAP response products to domain offers
 	for _, product := range soapResponse.Body.Output.Products {
 		offer := api.soapProductToOffer(product)
+		offer.Provider = api.GetProviderName()
 		offers = append(offers, offer)
 	}
 
@@ -197,30 +198,30 @@ func (api *WebWunderApi) GetOffers(ctx context.Context, address domain.Address) 
 // soapProductToOffer converts a WebWunder SOAP product to a domain.Offer
 func (api *WebWunderApi) soapProductToOffer(product WebWunderSoapProduct) (offer domain.Offer) {
 	// Map product info
-	offer.ProductInfo.ProductID = product.ProductID
-	offer.ProductInfo.ProviderName = product.ProviderName
+	offer.ProductID = product.ProductID
+	offer.ProductName = product.ProviderName
 
 	// Initialize values to defaults
-	offer.PricingDetails.InstallationService = false // Default for WebWunder
+	offer.InstallationService = false // Default for WebWunder
 
 	if product.ProductInfo != nil {
-		offer.ProductInfo.Speed = product.ProductInfo.Speed
-		offer.ProductInfo.ContractDurationInMonths = product.ProductInfo.ContractDurationInMonths
-		offer.ProductInfo.ConnectionType = product.ProductInfo.ConnectionType
+		offer.Speed = product.ProductInfo.Speed
+		offer.ContractDurationInMonths = product.ProductInfo.ContractDurationInMonths
+		offer.ConnectionType = product.ProductInfo.ConnectionType
 
 		// Map pricing details
-		offer.PricingDetails.MonthlyCostInCent = product.ProductInfo.MonthlyCostInCent
-		offer.PricingDetails.AfterTwoYearsMonthlyCost = product.ProductInfo.MonthlyCostInCentFrom25thMonth
+		offer.MonthlyCostInCent = product.ProductInfo.MonthlyCostInCent
+		offer.AfterTwoYearsMonthlyCost = product.ProductInfo.MonthlyCostInCentFrom25thMonth
 
 		// TODO process voucher differently
 		// Process voucher if available
 		if product.ProductInfo.Voucher != nil {
 			if product.ProductInfo.Voucher.PercentageVoucher != nil {
-				offer.PricingDetails.VoucherType = "percentage"
-				offer.PricingDetails.VoucherValue = product.ProductInfo.Voucher.PercentageVoucher.Percentage
+				offer.VoucherType = "percentage"
+				offer.VoucherValue = product.ProductInfo.Voucher.PercentageVoucher.Percentage
 			} else if product.ProductInfo.Voucher.AbsoluteVoucher != nil {
-				offer.PricingDetails.VoucherType = "absolute"
-				offer.PricingDetails.VoucherValue = product.ProductInfo.Voucher.AbsoluteVoucher.DiscountInCent
+				offer.VoucherType = "absolute"
+				offer.VoucherValue = product.ProductInfo.Voucher.AbsoluteVoucher.DiscountInCent
 			}
 		}
 	}

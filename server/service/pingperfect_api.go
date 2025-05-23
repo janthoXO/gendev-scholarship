@@ -97,6 +97,7 @@ func (api *PingPerfectApi) GetOffers(ctx context.Context, address domain.Address
 	// Convert to domain.Offer objects
 	for _, product := range products {
 		offer := api.productToOffer(product)
+		offer.Provider = api.GetProviderName()
 		offers = append(offers, offer)
 	}
 
@@ -107,20 +108,16 @@ func (api *PingPerfectApi) GetOffers(ctx context.Context, address domain.Address
 func (api *PingPerfectApi) productToOffer(product PingPerfectProduct) domain.Offer {
 	offer := domain.Offer{}
 
-	offer.ProductInfo.ProviderName = product.ProviderName
-	offer.ProductInfo.Speed = product.ProductInfo.Speed
-	offer.ProductInfo.ContractDurationInMonths = product.ProductInfo.ContractDurationInMonths
-	offer.ProductInfo.ConnectionType = product.ProductInfo.ConnectionType
-	offer.ProductInfo.Tv = product.ProductInfo.Tv
-	offer.ProductInfo.LimitFrom = product.ProductInfo.LimitFrom
-	offer.ProductInfo.MaxAge = product.ProductInfo.MaxAge
+	offer.ProductName = product.ProviderName
+	offer.Speed = product.ProductInfo.Speed
+	offer.ContractDurationInMonths = product.ProductInfo.ContractDurationInMonths
+	offer.ConnectionType = product.ProductInfo.ConnectionType
+	offer.Tv = product.ProductInfo.Tv
+	offer.LimitInGb = product.ProductInfo.LimitFrom
+	offer.MaxAgePerson = product.ProductInfo.MaxAge
 
-	offer.PricingDetails.MonthlyCostInCent = product.PricingDetails.MonthlyCostInCent
-	if product.PricingDetails.InstallationService == "yes" {
-		offer.PricingDetails.InstallationService = true
-	} else {
-		offer.PricingDetails.InstallationService = false
-	}
+	offer.MonthlyCostInCent = product.PricingDetails.MonthlyCostInCent
+	offer.InstallationService = product.PricingDetails.InstallationService == "yes"
 
 	return offer
 }

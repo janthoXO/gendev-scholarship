@@ -61,6 +61,7 @@ func (api *ByteMeApi) GetOffers(ctx context.Context, address domain.Address) (of
 	// Convert maps to domain.Offer objects
 	for _, item := range csvMaps {
 		offer := api.mapToOffer(item)
+		offer.Provider = api.GetProviderName()
 		offers = append(offers, offer)
 	}
 
@@ -71,59 +72,59 @@ func (api *ByteMeApi) GetOffers(ctx context.Context, address domain.Address) (of
 func (api *ByteMeApi) mapToOffer(item map[string]interface{}) (offer domain.Offer) {
 	// Map product info fields
 	if productId, ok := item["productId"].(int); ok {
-		offer.ProductInfo.ProductID = productId
+		offer.ProductID = productId
 	}
 
 	// Set provider name inside ProductInfo
 	if providerName, ok := item["providerName"].(string); ok {
-		offer.ProductInfo.ProviderName = providerName
+		offer.ProductName = providerName
 	}
 
 	if speed, ok := item["speed"].(int); ok {
-		offer.ProductInfo.Speed = speed
+		offer.Speed = speed
 	}
 
 	if duration, ok := item["durationInMonths"].(int); ok {
-		offer.ProductInfo.ContractDurationInMonths = duration
+		offer.ContractDurationInMonths = duration
 	}
 
 	if limit, ok := item["limitFrom"].(int); ok {
-		offer.ProductInfo.LimitFrom = limit
+		offer.LimitInGb = limit
 	}
 
 	if age, ok := item["maxAge"].(int); ok {
-		offer.ProductInfo.MaxAge = age
+		offer.MaxAgePerson = age
 	}
 
 	// Map string fields
 	if connectionType, ok := item["connectionType"].(string); ok {
-		offer.ProductInfo.ConnectionType = connectionType
+		offer.ConnectionType = connectionType
 	}
 
 	if tv, ok := item["tv"].(string); ok {
-		offer.ProductInfo.Tv = tv
+		offer.Tv = tv
 	}
 
 	// Map pricing details
 	if cost, ok := item["monthlyCostInCent"].(int); ok {
-		offer.PricingDetails.MonthlyCostInCent = cost
+		offer.MonthlyCostInCent = cost
 	}
 
 	// Map pricing fields
 	if afterTwoYearsCost, ok := item["afterTwoYearsMonthlyCost"].(int); ok {
-		offer.PricingDetails.AfterTwoYearsMonthlyCost = afterTwoYearsCost
+		offer.AfterTwoYearsMonthlyCost = afterTwoYearsCost
 	}
 
 	if service, ok := item["installationService"].(bool); ok {
-		offer.PricingDetails.InstallationService = service
+		offer.InstallationService = service
 	}
 
 	if voucherType, ok := item["voucherType"].(string); ok {
-		offer.PricingDetails.VoucherType = voucherType
+		offer.VoucherType = voucherType
 	}
 
 	if voucherValue, ok := item["voucherValue"].(int); ok {
-		offer.PricingDetails.VoucherValue = voucherValue
+		offer.VoucherValue = voucherValue
 	}
 
 	return offer
