@@ -62,6 +62,7 @@ func (api *ByteMeApi) GetOffers(ctx context.Context, address domain.Address) (of
 	for _, item := range csvMaps {
 		offer := api.mapToOffer(item)
 		offer.Provider = api.GetProviderName()
+		offer.HelperOfferHash = offer.GetHash()
 		offers = append(offers, offer)
 	}
 

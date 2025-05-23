@@ -189,6 +189,7 @@ func (api *WebWunderApi) GetOffers(ctx context.Context, address domain.Address) 
 	for _, product := range soapResponse.Body.Output.Products {
 		offer := api.soapProductToOffer(product)
 		offer.Provider = api.GetProviderName()
+		offer.HelperOfferHash = offer.GetHash()
 		offers = append(offers, offer)
 	}
 

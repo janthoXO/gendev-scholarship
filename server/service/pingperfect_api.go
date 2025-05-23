@@ -98,6 +98,7 @@ func (api *PingPerfectApi) GetOffers(ctx context.Context, address domain.Address
 	for _, product := range products {
 		offer := api.productToOffer(product)
 		offer.Provider = api.GetProviderName()
+		offer.HelperOfferHash = offer.GetHash()
 		offers = append(offers, offer)
 	}
 

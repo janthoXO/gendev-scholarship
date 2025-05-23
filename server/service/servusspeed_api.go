@@ -82,6 +82,7 @@ func (api *ServusSpeedApi) GetOffers(ctx context.Context, address domain.Address
 			// Convert to domain.Offer
 			offer := api.convertToOffer(product)
 			offer.Provider = api.GetProviderName()
+			offer.HelperOfferHash = offer.GetHash()
 			offerChan <- offer
 		}(productID)
 	}

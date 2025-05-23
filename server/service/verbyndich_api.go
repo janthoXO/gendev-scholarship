@@ -88,6 +88,7 @@ func (api *VerbyndichAPI) GetOffers(ctx context.Context, address domain.Address)
 			err = api.parseVerbyndichDescription(response.Description, &offer)
 			if err == nil {
 				offer.Provider = api.GetProviderName()
+				offer.HelperOfferHash = offer.GetHash()
 				offers = append(offers, offer)
 			}
 		}

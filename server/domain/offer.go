@@ -1,5 +1,10 @@
 package domain
 
+import (
+	"crypto/sha256"
+	"fmt"
+)
+
 type Offer struct {
 	// product details
 	Provider                     string            `json:"provider"`
@@ -22,5 +27,13 @@ type Offer struct {
 	// helper fields
 	// hash over product details
 	HelperOfferHash         string `json:"offerHash"`
-	HelperTimesNotAvailable int    `json:"timesNotAvailable"`
+}
+
+func (o *Offer) GetHash() string {
+	h := sha256.New()
+	h.Write(fmt.Appendf(nil, "%s%d%s%d%d%s%s%d%d%d%d%d%t%s%d%v", o.Provider, o.ProductID, o.ProductName,
+		o.Speed, o.ContractDurationInMonths, o.ConnectionType, o.Tv, o.LimitInGb, o.MaxAgePerson,
+		o.MonthlyCostInCent, o.AfterTwoYearsMonthlyCost, o.MonthlyCostInCentWithVoucher, o.InstallationService,
+		o.VoucherType, o.VoucherValue, o.ExtraProperties))
+	return string(h.Sum(nil))
 }
