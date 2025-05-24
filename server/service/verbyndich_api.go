@@ -12,8 +12,6 @@ import (
 	"server/utils"
 	"strconv"
 	"strings"
-
-	log "github.com/sirupsen/logrus"
 )
 
 type VerbyndichAPI struct{}
@@ -160,20 +158,15 @@ var regexPatterns = []func(string, *domain.Offer) error{
 				case "Price":
 					costInEuro, _ := strconv.Atoi(m[i])
 					offer.MonthlyCostInCent = costInEuro * 100
-					log.Debugf("Price found: %d\n", offer.MonthlyCostInCent)
 				case "Type":
 					offer.ConnectionType = m[i]
-					log.Debugf("ConnectionType found: %s\n", offer.ConnectionType)
 				case "Speed":
 					offer.Speed, _ = strconv.Atoi(m[i])
-					log.Debugf("Speed found: %d\n", offer.Speed)
 				case "MinContract":
 					offer.ContractDurationInMonths, _ = strconv.Atoi(m[i])
-					log.Debugf("MinContract found: %d\n", offer.ContractDurationInMonths)
 				case "TwoYearsCost":
 					costInEuro, _ := strconv.Atoi(m[i])
 					offer.AfterTwoYearsMonthlyCost = costInEuro * 100
-					log.Debugf("After Two Years Price found: %d\n", offer.AfterTwoYearsMonthlyCost)
 				}
 			}
 		} else {
@@ -188,9 +181,6 @@ var regexPatterns = []func(string, *domain.Offer) error{
 		if matches := regexPattern.FindStringSubmatch(description); len(matches) > 1 {
 			// matches[0] is the full match, matches[1] is the first capture group
 			offer.Tv = matches[1]
-			log.Debugf("TV found: %s\n", offer.Tv)
-		} else {
-			log.Debugf("no tv found for %s\n", offer.ProductName)
 		}
 
 		return nil
@@ -200,9 +190,6 @@ var regexPatterns = []func(string, *domain.Offer) error{
 		if matches := regexPattern.FindStringSubmatch(description); len(matches) > 1 {
 			// matches[0] is the full match, matches[1] is the first capture group
 			offer.LimitInGb, _ = strconv.Atoi(matches[1])
-			log.Debugf("throttle found: %d\n", offer.LimitInGb)
-		} else {
-			log.Debugf("no throttle found for %s\n", offer.ProductName)
 		}
 
 		return nil
@@ -212,10 +199,7 @@ var regexPatterns = []func(string, *domain.Offer) error{
 		if matches := regexPattern.FindStringSubmatch(description); len(matches) > 1 {
 			// matches[0] is the full match, matches[1] is the first capture group
 			offer.MaxAgePerson, _ = strconv.Atoi(matches[1])
-			log.Debugf("MaxAge found: %d\n", offer.MaxAgePerson)
-		} else {
-			log.Debugf("no max age found for %s\n", offer.ProductName)
-		}
+		} 
 
 		return nil
 	}, //optional
@@ -225,9 +209,6 @@ var regexPatterns = []func(string, *domain.Offer) error{
 			// matches[0] is the full match, matches[1] is the first capture group
 			offer.VoucherType = "Percentage"
 			offer.VoucherValue, _ = strconv.Atoi(matches[1])
-			log.Debugf("voucher found: %d\n", offer.VoucherValue)
-		} else {
-			log.Debugf("no voucher found for %s\n", offer.ProductName)
 		}
 
 		return nil

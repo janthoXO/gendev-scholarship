@@ -127,9 +127,6 @@ func FetchOffers(c *gin.Context) {
 				log.WithError(err).Warn("Error while fetching offers")
 
 			case <-c.Request.Context().Done():
-				log.Debug("Client disconnected, exiting streaming goroutine")
-				writer.Write([]byte("]"))
-				flusher.Flush()
 				// Signal that we've finished writing the stream
 				close(streamingDone)
 				return
