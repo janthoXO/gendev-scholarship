@@ -1,15 +1,26 @@
 services:
   offer-cache:
     image: redis:latest
-    container_name: redis_cache
     command: redis-server --requirepass ${OFFER_CACHE_PASSWORD}
     ports:
       - "6379:6379"
     volumes:
-      - redis_data:/data
+      - offer_data:/data
     environment:
       - REDIS_PASSWORD=${OFFER_CACHE_PASSWORD}
 
+  user-offer-cache:
+    image: redis:latest
+    command: redis-server --requirepass ${USER_OFFER_CACHE_PASSWORD}
+    ports:
+      - "6380:6379"
+    volumes:
+      - user_offer_data:/data
+    environment:
+      - REDIS_PASSWORD=${USER_OFFER_CACHE_PASSWORD}
+
 volumes:
-  redis_data:
+  offer_data:
+    driver: local
+  user_offer_data:
     driver: local

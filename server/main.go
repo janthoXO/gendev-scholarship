@@ -15,7 +15,8 @@ func main() {
 	cfg := utils.LoadConfig()
 
 	// Initialize Redis client
-	db.InitRedisClient()
+	db.InitOfferCache()
+	db.InitUserOfferCache()
 
 	log.Infof("Starting GenDev server on port %d", cfg.Server.Port)
 	gin.SetMode(gin.ReleaseMode)

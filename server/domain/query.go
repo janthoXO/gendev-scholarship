@@ -6,21 +6,25 @@ import (
 )
 
 type Query struct {
-	Offers []Offer `json:"offers"`
-	Address Address `json:"address"`
+	Offers    []Offer   `json:"offers,omitempty"`
+	Address   Address   `json:"address"`
 	Timestamp time.Time `json:"timestamp"`
+	SessionID string    `json:"sessionId"`
 
 	// helper fields
 	// hash over address, timestamp and offers
-	HelperQueryHash string `json:"queryHash"`
-	HelperNumberOffers int `json:"numberOfOffers"`
+	HelperAddressHash string `json:"-"`
 }
 
-func (q *Query) GetHash() string {
+func (q *Query) GenerateAddressHash()  {
+	q.HelperAddressHash = GetHashByAddress(q.Address)
+}
+
+func GetHashByAddress(address Address) string {
 	h := sha256.New()
-	// generate a unique key based on the address and timestamp
-	stringToHash := q.Address.Street + q.Address.HouseNumber + q.Address.ZipCode + q.Address.City + q.Timestamp.String()
-	
+	// generate a unique key based on the address
+	stringToHash := address.Street + address.HouseNumber + address.ZipCode + address.City
+
 	h.Write([]byte(stringToHash))
 	return string(h.Sum(nil))
 }

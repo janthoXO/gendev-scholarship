@@ -26,8 +26,8 @@ type Offer struct {
 
 	// helper fields
 	// hash over product details
-	HelperOfferHash         string `json:"offerHash"`
-	HelperOfferStatus 		OfferStatus   `json:"status"`
+	HelperOfferHash     string `json:"offerHash"`
+	HelperIsPreliminary bool   `json:"isPreliminary"`
 }
 
 func (o *Offer) GetHash() string {

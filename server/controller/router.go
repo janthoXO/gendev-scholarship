@@ -4,8 +4,10 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"server/db"
 	"server/domain"
 	"server/service"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	log "github.com/sirupsen/logrus"
@@ -26,16 +28,35 @@ func SetupRouter() *gin.Engine {
 
 var offerService = service.OfferServiceImpl{}
 
-type AddressQueryParameters struct {
+type FetchOffersQueryParameters struct {
 	Street      string `form:"street"`
 	HouseNumber string `form:"houseNumber"`
 	City        string `form:"city"`
 	ZipCode     string `form:"plz"`
+	SessionId   string `form:"sessionId"`
 }
 
 func FetchOffersByAddress(c *gin.Context) {
+	var query domain.Query = domain.Query{
+		Timestamp: time.Now(),
+	}
+
+	flusher, ok := c.Writer.(http.Flusher)
+	if !ok {
+		log.Warn("Writer doesn't support flushing")
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Streaming not supported"})
+		return
+	}
+
+	// Set response headers for streaming
+	// Set headers for NDJSON
+	c.Header("Content-Type", "application/x-ndjson")
+	c.Header("Cache-Control", "no-cache")
+	c.Header("Connection", "close") // Will close when done
+	c.Header("Access-Control-Allow-Origin", "*")
+
 	// Parse address parameters from query
-	var params AddressQueryParameters
+	var params FetchOffersQueryParameters
 	if err := c.ShouldBindQuery(&params); err != nil {
 		log.WithError(err).Warn("Failed to parse query parameters")
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid query parameters"})
@@ -44,35 +65,27 @@ func FetchOffersByAddress(c *gin.Context) {
 
 	// Validate required parameters
 	if params.Street == "" || params.HouseNumber == "" || params.City == "" || params.ZipCode == "" {
-		log.Warn("Not all parameters specified")
+		log.Warn("Not all address parameters specified")
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Missing required address parameters"})
+		return
+	}
+	if params.SessionId == "" {
+		log.Warn("Session ID not specified")
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Missing session ID"})
 		return
 	}
 
 	// Create address object
-	address := domain.Address{
+	query.Address = domain.Address{
 		Street:      params.Street,
 		HouseNumber: params.HouseNumber,
 		City:        params.City,
 		ZipCode:     params.ZipCode,
 	}
-
-	// Set response headers for streaming
-	c.Header("Content-Type", "application/json")
-	c.Header("Cache-Control", "no-cache")
-	c.Header("Connection", "keep-alive")
-	c.Header("Access-Control-Allow-Origin", "*")
+	query.SessionID = params.SessionId
 
 	// Set status for successful response
 	c.Status(http.StatusOK)
-
-	writer := c.Writer
-	flusher, ok := writer.(http.Flusher)
-	if !ok {
-		log.Warn("Writer doesn't support flushing")
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Streaming not supported"})
-		return
-	}
 
 	// Create channels for streaming offers
 	offersChannel := make(chan domain.Offer)
@@ -80,20 +93,20 @@ func FetchOffersByAddress(c *gin.Context) {
 
 	ctx := c.Request.Context()
 	// retrieve cached offers
-	cachedOffers := offerService.GetOffersCached(ctx, address)
-	if cachedOffers != nil {
-		log.WithField("count", len(cachedOffers)).Debug("Retrieved cached offers")
-	}
-	for _, offer := range cachedOffers {
-		offer.HelperOfferStatus = domain.OfferStatus(domain.Preliminary)
-		if offerJSON, err := json.Marshal(offer); err == nil {
-			fmt.Fprintf(writer, "offer: %s\n\n", offerJSON)
-			flusher.Flush()
+	cachedQuery, _ := db.OfferCacheInstance.GetCachedQuery(ctx, query)
+	if cachedQuery != nil {
+		log.Debugf("Found cached query for address %s", query.Address)
+		for _, offer := range cachedQuery.Offers {
+			offer.HelperIsPreliminary = true
+			if offerJSON, err := json.Marshal(offer); err == nil {
+				fmt.Fprintf(c.Writer, "{offer: %s}\n", offerJSON)
+				flusher.Flush()
+			}
 		}
 	}
 
 	// Start the streaming service and get the completion signal
-	offersFetchingDone := offerService.FetchOffersStream(ctx, address, offersChannel, errChannel)
+	offersFetchingDone := offerService.FetchOffersStream(ctx, query.Address, offersChannel, errChannel)
 	go func() {
 		select {
 		case <-offersFetchingDone:
@@ -105,24 +118,22 @@ func FetchOffersByAddress(c *gin.Context) {
 		}
 	}()
 
-	offersStreamingDone, offersForCacheChannel := handleOfferStreaming(c, writer, flusher, offersChannel)
+	offersStreamingDone, offersForCacheChannel := handleOfferStreaming(c, flusher, offersChannel)
 
 	offersCachingDone := make(chan struct{})
 	// Process errors
 	go func() {
-		validOffers := make([]domain.Offer, 0)
-
 		for {
 			select {
 			case offer, ok := <-offersForCacheChannel:
 				if !ok {
-					log.Debugf("Caching %d valid offers", len(validOffers))
-					offerService.CacheOffers(ctx, address, validOffers)
+					db.OfferCacheInstance.CacheQuery(ctx, query)
+					db.UserOfferCacheInstance.CacheQuery(ctx, query)
 					close(offersCachingDone)
 					return
 				}
 
-				validOffers = append(validOffers, offer)
+				query.Offers = append(query.Offers, offer)
 			case err, ok := <-errChannel:
 				if !ok {
 					continue
@@ -140,11 +151,23 @@ func FetchOffersByAddress(c *gin.Context) {
 	<-offersStreamingDone
 	<-offersCachingDone
 
+	// set offers to nil to not send them again
+	query.Offers = nil
+	if queryJSON, err := json.Marshal(query); err == nil {
+		fmt.Fprintf(c.Writer, "{query: %s}\n", queryJSON)
+		flusher.Flush()
+	}
+
 	// write query related information to the response
 	log.Debug("Stream successfully closed")
 }
 
-func handleOfferStreaming(c *gin.Context, writer gin.ResponseWriter, flusher http.Flusher, offersChannel <-chan domain.Offer) (done chan struct{}, fanOffersChannel chan domain.Offer) {
+func FetchSharedOffers(c *gin.Context) {
+
+	c.JSON(http.StatusNotImplemented, gin.H{"error": "Shared offers not implemented yet"})
+}
+
+func handleOfferStreaming(c *gin.Context, flusher http.Flusher, offersChannel <-chan domain.Offer) (done chan struct{}, fanOffersChannel chan domain.Offer) {
 	done = make(chan struct{})
 	fanOffersChannel = make(chan domain.Offer)
 
@@ -159,9 +182,9 @@ func handleOfferStreaming(c *gin.Context, writer gin.ResponseWriter, flusher htt
 				}
 
 				fanOffersChannel <- offer
-				offer.HelperOfferStatus = domain.OfferStatus(domain.Valid)
+				offer.HelperIsPreliminary = false
 				if offerJSON, err := json.Marshal(offer); err == nil {
-					fmt.Fprintf(writer, "offer: %s\n\n", offerJSON)
+					fmt.Fprintf(c.Writer, "{offer: %s}\n", offerJSON)
 					flusher.Flush()
 				} else {
 					log.WithError(err).Warn("Failed to marshal offer")
@@ -174,9 +197,4 @@ func handleOfferStreaming(c *gin.Context, writer gin.ResponseWriter, flusher htt
 	}()
 
 	return done, fanOffersChannel
-}
-
-func FetchSharedOffers(c *gin.Context) {
-
-	c.JSON(http.StatusNotImplemented, gin.H{"error": "Shared offers not implemented yet"})
 }
