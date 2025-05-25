@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"server/db"
 	"server/domain"
 	"server/utils"
 	"sync"
@@ -16,6 +17,19 @@ var providers = []InternetProviderAPI{
 	&ServusSpeedApi{},
 	&VerbyndichAPI{},
 	&WebWunderApi{},
+}
+
+func (service OfferServiceImpl) GetOffersCached(ctx context.Context, address domain.Address) (offers []domain.Offer) {
+	return db.GetCachedOffers(ctx, address)
+}
+
+func (service OfferServiceImpl) CacheOffers(ctx context.Context, address domain.Address, offers []domain.Offer) {
+	if len(offers) == 0 {
+		return
+	}
+
+	// Cache the offers for the given address
+	db.CacheOffers(ctx, address, offers)
 }
 
 func (service OfferServiceImpl) FetchOffersStream(ctx context.Context, address domain.Address, offersChannel chan<- domain.Offer, errChannel chan<- error) <-chan struct{} {

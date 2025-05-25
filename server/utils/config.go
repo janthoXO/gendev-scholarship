@@ -14,9 +14,13 @@ type Configuration struct {
 		User     string `env:"DATABASE_USER,notEmpty"`
 		Password string `env:"DATABASE_PASSWORD,notEmpty"`
 	}
+	OfferCache struct {
+		Url      string `env:"OFFER_CACHE_URL,notEmpty"`
+		Password string `env:"OFFER_CACHE_PASSWORD,notEmpty"`
+	}
 	Server struct {
-		Port               uint   `env:"SERVER_PORT" envDefault:"8080"`
-		ApiTimeout 	  uint   `env:"API_TIMEOUT" envDefault:"30"`
+		Port       uint `env:"SERVER_PORT" envDefault:"8080"`
+		ApiTimeout uint `env:"API_TIMEOUT" envDefault:"30"`
 	}
 	VerbynDich struct {
 		ApiKey string `env:"VERBYNDICH_API_KEY,notEmpty"`

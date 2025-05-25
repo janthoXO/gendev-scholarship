@@ -2,6 +2,7 @@ package controller
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"server/domain"
 	"server/service"
@@ -15,7 +16,8 @@ func SetupRouter() *gin.Engine {
 	r.Use(gin.ErrorLogger())
 	r.Use(gin.Recovery())
 
-	r.GET("/offers", FetchOffers)
+	r.GET("/offers", FetchOffersByAddress)
+	r.GET("/offers/shared", FetchSharedOffers)
 	// TODO add a post endpoint which buys an offer. The request gets put into a queue until the api is available again
 	// r.POST("/offers")
 
@@ -31,7 +33,7 @@ type AddressQueryParameters struct {
 	ZipCode     string `form:"plz"`
 }
 
-func FetchOffers(c *gin.Context) {
+func FetchOffersByAddress(c *gin.Context) {
 	// Parse address parameters from query
 	var params AddressQueryParameters
 	if err := c.ShouldBindQuery(&params); err != nil {
@@ -64,14 +66,6 @@ func FetchOffers(c *gin.Context) {
 	// Set status for successful response
 	c.Status(http.StatusOK)
 
-	// Create channels for streaming offers
-	offersChannel := make(chan domain.Offer)
-	errChannel := make(chan error)
-
-	// Start the streaming service and get the completion signal
-	completionSignal := offerService.FetchOffersStream(c.Request.Context(), address, offersChannel, errChannel)
-
-	// Stream offers to the client
 	writer := c.Writer
 	flusher, ok := writer.(http.Flusher)
 	if !ok {
@@ -80,76 +74,109 @@ func FetchOffers(c *gin.Context) {
 		return
 	}
 
-	// Stream the response as JSON array manually
-	writer.Write([]byte("["))
-	flusher.Flush()
+	// Create channels for streaming offers
+	offersChannel := make(chan domain.Offer)
+	errChannel := make(chan error)
 
-	first := true
+	ctx := c.Request.Context()
+	// retrieve cached offers
+	cachedOffers := offerService.GetOffersCached(ctx, address)
+	if cachedOffers != nil {
+		log.WithField("count", len(cachedOffers)).Debug("Retrieved cached offers")
+	}
+	for _, offer := range cachedOffers {
+		offer.HelperOfferStatus = domain.OfferStatus(domain.Preliminary)
+		if offerJSON, err := json.Marshal(offer); err == nil {
+			fmt.Fprintf(writer, "offer: %s\n\n", offerJSON)
+			flusher.Flush()
+		}
+	}
 
-	// Create a separate done channel for the streaming goroutine
-	streamingDone := make(chan struct{})
-
-	// Process offers and errors
+	// Start the streaming service and get the completion signal
+	offersFetchingDone := offerService.FetchOffersStream(ctx, address, offersChannel, errChannel)
 	go func() {
+		select {
+		case <-offersFetchingDone:
+			log.Debug("Offers fetching completed")
+			close(offersChannel)
+			close(errChannel)
+		case <-c.Request.Context().Done():
+			log.Debug("Client disconnected while fetching offers")
+		}
+	}()
+
+	offersStreamingDone, offersForCacheChannel := handleOfferStreaming(c, writer, flusher, offersChannel)
+
+	offersCachingDone := make(chan struct{})
+	// Process errors
+	go func() {
+		validOffers := make([]domain.Offer, 0)
+
 		for {
 			select {
-			case offer, ok := <-offersChannel:
+			case offer, ok := <-offersForCacheChannel:
 				if !ok {
-					// offersChannel closed, exit the loop
-					log.Debug("Offers channel closed, finishing stream")
-					writer.Write([]byte("]"))
-					flusher.Flush()
-					// Signal that we've finished writing the stream
-					close(streamingDone)
+					log.Debugf("Caching %d valid offers", len(validOffers))
+					offerService.CacheOffers(ctx, address, validOffers)
+					close(offersCachingDone)
 					return
 				}
 
-				// Add comma separator if not the first offer
-				if !first {
-					writer.Write([]byte(","))
-				} else {
-					first = false
-				}
-
-				// Marshal and write the offer
-				if offerJSON, err := json.Marshal(offer); err == nil {
-					writer.Write(offerJSON)
-					flusher.Flush()
-				} else {
-					log.WithError(err).Warn("Failed to marshal offer")
-				}
-
+				validOffers = append(validOffers, offer)
 			case err, ok := <-errChannel:
 				if !ok {
-					// errChannel closed but continue waiting for offers
 					continue
 				}
 				log.WithError(err).Warn("Error while fetching offers")
 
 			case <-c.Request.Context().Done():
 				// Signal that we've finished writing the stream
-				close(streamingDone)
 				return
 			}
 		}
 	}()
 
-	// Wait for providers completion, processing completion or client disconnect
-	select {
-	case <-completionSignal:
-		// All providers have completed
-		log.Debug("All providers have completed")
+	// Wait for the streaming and caching to finish
+	<-offersStreamingDone
+	<-offersCachingDone
 
-		// Close the channels as the router is responsible for them
-		close(offersChannel)
-		close(errChannel)
+	// write query related information to the response
+	log.Debug("Stream successfully closed")
+}
 
-		// Wait for the streaming goroutine to finish writing
-		<-streamingDone
-		log.Debug("Stream successfully closed")
+func handleOfferStreaming(c *gin.Context, writer gin.ResponseWriter, flusher http.Flusher, offersChannel <-chan domain.Offer) (done chan struct{}, fanOffersChannel chan domain.Offer) {
+	done = make(chan struct{})
+	fanOffersChannel = make(chan domain.Offer)
 
-	case <-c.Request.Context().Done():
-		log.Debug("Client disconnected")
-		return
-	}
+	go func() {
+		for {
+			select {
+			case offer, ok := <-offersChannel:
+				if !ok {
+					close(fanOffersChannel)
+					close(done)
+					return
+				}
+
+				fanOffersChannel <- offer
+				offer.HelperOfferStatus = domain.OfferStatus(domain.Valid)
+				if offerJSON, err := json.Marshal(offer); err == nil {
+					fmt.Fprintf(writer, "offer: %s\n\n", offerJSON)
+					flusher.Flush()
+				} else {
+					log.WithError(err).Warn("Failed to marshal offer")
+				}
+
+			case <-c.Request.Context().Done():
+				return
+			}
+		}
+	}()
+
+	return done, fanOffersChannel
+}
+
+func FetchSharedOffers(c *gin.Context) {
+
+	c.JSON(http.StatusNotImplemented, gin.H{"error": "Shared offers not implemented yet"})
 }

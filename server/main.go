@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"server/controller"
+	"server/db"
 	"server/utils"
 
 	"github.com/gin-gonic/gin"
@@ -12,6 +13,9 @@ import (
 func main() {
 	// Load environment variables
 	cfg := utils.LoadConfig()
+
+	// Initialize Redis client
+	db.InitRedisClient()
 
 	log.Infof("Starting GenDev server on port %d", cfg.Server.Port)
 	gin.SetMode(gin.ReleaseMode)
