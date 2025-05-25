@@ -19,9 +19,8 @@ func SetupRouter() *gin.Engine {
 	r.Use(gin.Recovery())
 
 	r.GET("/offers", FetchOffersByAddress)
-	r.GET("/offers/shared", FetchSharedOffers)
-	// TODO add a post endpoint which buys an offer. The request gets put into a queue until the api is available again
-	// r.POST("/offers")
+	r.GET("/offers/:queryHash/shared", FetchSharedOffers)
+	r.POST("/offers/:queryHash/shared", ShareOffer)
 
 	return r
 }
@@ -93,17 +92,22 @@ func FetchOffersByAddress(c *gin.Context) {
 
 	ctx := c.Request.Context()
 	// retrieve cached offers
-	cachedQuery, _ := db.OfferCacheInstance.GetCachedQuery(ctx, query)
-	if cachedQuery != nil {
-		log.Debugf("Found cached query for address %s", query.Address)
-		for _, offer := range cachedQuery.Offers {
-			offer.HelperIsPreliminary = true
-			if offerJSON, err := json.Marshal(offer); err == nil {
-				fmt.Fprintf(c.Writer, "{offer: %s}\n", offerJSON)
-				flusher.Flush()
+	cachedOffersStreamingDone := make(chan struct{})
+	go func() {
+		cachedQuery, _ := db.OfferCacheInstance.GetCachedQuery(ctx, query)
+		if cachedQuery != nil {
+			log.Debugf("Found cached query for address %s", query.Address)
+			for _, offer := range cachedQuery.Offers {
+				offer.HelperIsPreliminary = true
+				if offerJSON, err := json.Marshal(offer); err == nil {
+					fmt.Fprintf(c.Writer, "{offer: %s}\n", offerJSON)
+					flusher.Flush()
+				}
 			}
 		}
-	}
+		log.Debug("Cached offers streaming done")
+		close(cachedOffersStreamingDone)
+	}()
 
 	// Start the streaming service and get the completion signal
 	offersFetchingDone := offerService.FetchOffersStream(ctx, query.Address, offersChannel, errChannel)
@@ -148,6 +152,7 @@ func FetchOffersByAddress(c *gin.Context) {
 	}()
 
 	// Wait for the streaming and caching to finish
+	<-cachedOffersStreamingDone
 	<-offersStreamingDone
 	<-offersCachingDone
 
@@ -160,6 +165,24 @@ func FetchOffersByAddress(c *gin.Context) {
 
 	// write query related information to the response
 	log.Debug("Stream successfully closed")
+}
+
+func ShareOffer(c *gin.Context) {
+	queryHash := c.Param("queryHash")
+	if queryHash == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Query hash is required"})
+		return
+	}
+	query, err := db.UserOfferCacheInstance.GetCachedUserQuery(c.Request.Context(), queryHash)
+	if err != nil {
+		log.WithError(err).Error("Failed to retrieve cached query for sharing")
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to retrieve cached query"})
+		return
+	}
+
+	// TODO save query in database for sharing
+
+	c.JSON(http.StatusOK, gin.H{"link": fmt.Sprintf("offers/%s/shared?street=%s&houseNumber=%s&city=%s&plz=%s", queryHash, query.Address.Street, query.Address.HouseNumber, query.Address.City, query.Address.ZipCode)})
 }
 
 func FetchSharedOffers(c *gin.Context) {

@@ -2,6 +2,7 @@ package domain
 
 import (
 	"crypto/sha256"
+	"encoding/base64"
 	"time"
 )
 
@@ -26,5 +27,5 @@ func GetHashByAddress(address Address) string {
 	stringToHash := address.Street + address.HouseNumber + address.ZipCode + address.City
 
 	h.Write([]byte(stringToHash))
-	return string(h.Sum(nil))
+    return base64.RawURLEncoding.EncodeToString(h.Sum(nil))
 }

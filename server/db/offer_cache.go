@@ -49,10 +49,6 @@ func (cache offerCache) cacheKey(query domain.Query) string {
 
 // GetCachedQuery retrieves a cached query for an address from the cache
 func (cache offerCache) GetCachedQuery(ctx context.Context, query domain.Query) (*domain.Query, error) {
-	if cache.redisClient == nil {
-		return nil, fmt.Errorf("redis client is not initialized")
-	}
-
 	key := cache.cacheKey(query)
 	data, err := cache.redisClient.Get(ctx, key).Bytes()
 	if err != nil {
@@ -75,10 +71,6 @@ func (cache offerCache) GetCachedQuery(ctx context.Context, query domain.Query) 
 
 // CacheQuery stores a query for an address in the cache
 func (cache offerCache) CacheQuery(ctx context.Context, query domain.Query) error {
-	if cache.redisClient == nil {
-		return fmt.Errorf("redis client is not initialized")
-	}
-
 	data, err := json.Marshal(query)
 	if err != nil {
 		log.WithError(err).Error("Failed to marshal query for caching")

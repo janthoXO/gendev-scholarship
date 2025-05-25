@@ -48,12 +48,14 @@ func (cache userOfferCache) cacheKey(query domain.Query) string {
 }
 
 // GetCachedUserQuery retrieves a cached query for a user from the cache
-func (cache userOfferCache) GetCachedUserQuery(ctx context.Context, query domain.Query) (*domain.Query, error) {
-	if UserOfferCacheInstance.redisClient == nil {
-		return nil, fmt.Errorf("redis client is not initialized")
-	}
-
+func (cache userOfferCache) GetCachedUserQueryByQuery(ctx context.Context, query domain.Query) (*domain.Query, error) {
 	key := cache.cacheKey(query)
+	return cache.GetCachedUserQuery(ctx, key)
+}
+
+// GetCachedUserQuery retrieves a cached query for a user from the cache
+func (cache userOfferCache) GetCachedUserQuery(ctx context.Context, key string) (*domain.Query, error) {
+	var query domain.Query
 	data, err := UserOfferCacheInstance.redisClient.Get(ctx, key).Bytes()
 	if err != nil {
 		if err != redis.Nil {
@@ -75,10 +77,6 @@ func (cache userOfferCache) GetCachedUserQuery(ctx context.Context, query domain
 
 // CacheQuery stores a query in the cache
 func (cache userOfferCache) CacheQuery(ctx context.Context, query domain.Query) error {
-	if UserOfferCacheInstance.redisClient == nil {
-		return fmt.Errorf("redis client is not initialized")
-	}
-
 	data, err := json.Marshal(query)
 	if err != nil {
 		log.WithError(err).Error("Failed to marshal query for caching")

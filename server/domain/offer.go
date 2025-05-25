@@ -2,6 +2,7 @@ package domain
 
 import (
 	"crypto/sha256"
+	"encoding/base64"
 	"fmt"
 )
 
@@ -36,5 +37,5 @@ func (o *Offer) GetHash() string {
 		o.Speed, o.ContractDurationInMonths, o.ConnectionType, o.Tv, o.LimitInGb, o.MaxAgePerson,
 		o.MonthlyCostInCent, o.AfterTwoYearsMonthlyCost, o.MonthlyCostInCentWithVoucher, o.InstallationService,
 		o.VoucherType, o.VoucherValue, o.ExtraProperties))
-	return string(h.Sum(nil))
+    return base64.RawURLEncoding.EncodeToString(h.Sum(nil))
 }
