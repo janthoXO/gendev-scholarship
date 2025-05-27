@@ -148,53 +148,39 @@ func (api *WebWunderApi) GetOffersStream(ctx context.Context, address domain.Add
 	xmlHeader := []byte(`<?xml version="1.0" encoding="UTF-8"?>`)
 	requestXML = append(xmlHeader, requestXML...)
 
-	// Create HTTP request with the SOAP payload and context
-	req, err := http.NewRequestWithContext(ctx, "POST", "https://webwunder.gendev7.check24.fun:443/endpunkte/soap/ws", bytes.NewReader(requestXML))
-	if err != nil {
-		select {
-		case <-ctx.Done():
-			return
-		case errChannel <- fmt.Errorf("%s: failed to create request: %w", api.GetProviderName(), err):
-		}
-		return
-	}
-
-	// Set necessary headers
-	req.Header.Set("Content-Type", "text/xml; charset=utf-8")
-	req.Header.Set("X-Api-Key", utils.Cfg.WebWunder.ApiKey)
-	req.Header.Set("SOAPAction", "legacyGetInternetOffers")
-
 	// Send the request
-	client := &http.Client{}
-	resp, err := client.Do(req)
+	body, err := utils.RetryWrapper(ctx, func() ([]byte, error) {
+		// Create HTTP request with the SOAP payload and context
+		req, err := http.NewRequestWithContext(ctx, "POST", "https://webwunder.gendev7.check24.fun:443/endpunkte/soap/ws", bytes.NewReader(requestXML))
+		if err != nil {
+			return nil, fmt.Errorf("%s: failed to create request: %w", api.GetProviderName(), err)
+		}
+
+		// Set necessary headers
+		req.Header.Set("Content-Type", "text/xml; charset=utf-8")
+		req.Header.Set("X-Api-Key", utils.Cfg.WebWunder.ApiKey)
+		req.Header.Set("SOAPAction", "legacyGetInternetOffers")
+
+		client := &http.Client{}
+		resp, err := client.Do(req)
+		if err != nil {
+			return nil, err
+		}
+		defer resp.Body.Close()
+
+		// Check the response status code
+		if resp.StatusCode != http.StatusOK {
+			bodyBytes, _ := io.ReadAll(resp.Body)
+			return nil, fmt.Errorf("%s: received non-200 response: %d with body %s", api.GetProviderName(), resp.StatusCode, bodyBytes)
+		}
+
+		return io.ReadAll(resp.Body)
+	})
 	if err != nil {
 		select {
 		case <-ctx.Done():
 			return
-		case errChannel <- fmt.Errorf("%s: failed to send request: %w", api.GetProviderName(), err):
-		}
-		return
-	}
-	defer resp.Body.Close()
-
-	// Check the response status code
-	if resp.StatusCode != http.StatusOK {
-		bodyBytes, _ := io.ReadAll(resp.Body)
-		select {
-		case <-ctx.Done():
-			return
-		case errChannel <- fmt.Errorf("%s: API returned non-OK status: %d, body: %s", api.GetProviderName(), resp.StatusCode, string(bodyBytes)):
-		}
-		return
-	}
-
-	// Read and parse the XML response
-	body, err := io.ReadAll(resp.Body)
-	if err != nil {
-		select {
-		case <-ctx.Done():
-			return
-		case errChannel <- fmt.Errorf("%s: failed to read response body: %w", api.GetProviderName(), err):
+		case errChannel <- err:
 		}
 		return
 	}

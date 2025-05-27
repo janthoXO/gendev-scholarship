@@ -59,13 +59,15 @@ func (api *ServusSpeedApi) GetOffersStream(ctx context.Context, address domain.A
 		select {
 		case <-ctx.Done():
 			return
-		case errChannel <- err:
+		case errChannel <- fmt.Errorf("%s: failed to get available products: %w", api.GetProviderName(), err):
 		}
 		return
 	}
 
 	// Step 2: Get the details for each product ID in parallel
 	var wg sync.WaitGroup
+
+	productIDs = productIDs[0:1]
 
 	for _, productID := range productIDs {
 		wg.Add(1)
@@ -81,7 +83,7 @@ func (api *ServusSpeedApi) GetOffersStream(ctx context.Context, address domain.A
 				select {
 				case <-ctx.Done():
 					return
-				case errChannel <- err:
+				case errChannel <- fmt.Errorf("%s: failed to get product details for %s: %w", api.GetProviderName(), id, err):
 				}
 				return
 			}
@@ -122,36 +124,41 @@ func (api *ServusSpeedApi) getAvailableProducts(ctx context.Context, address dom
 		return nil, fmt.Errorf("failed to marshal request body: %w", err)
 	}
 
-	// Create HTTP request with context
-	req, err := http.NewRequestWithContext(ctx, "POST", "https://servus-speed.gendev7.check24.fun/api/external/available-products", bytes.NewBuffer(reqJSON))
-	if err != nil {
-		return nil, fmt.Errorf("failed to create request: %w", err)
-	}
-
-	// Add basic auth header
 	auth := utils.Cfg.ServusSpeed.Username + ":" + utils.Cfg.ServusSpeed.Password
 	basicAuth := "Basic " + base64.StdEncoding.EncodeToString([]byte(auth))
-	req.Header.Set("Authorization", basicAuth)
-	req.Header.Set("Content-Type", "application/json")
 
 	// Send the request
-	client := &http.Client{}
-	resp, err := client.Do(req)
+	productsResp, err := utils.RetryWrapper(ctx, func() (*ServusSpeedProductsResponse, error) {
+		// Create HTTP request with context
+		req, err := http.NewRequestWithContext(ctx, "POST", "https://servus-speed.gendev7.check24.fun/api/external/available-products", bytes.NewBuffer(reqJSON))
+		if err != nil {
+			return nil, fmt.Errorf("failed to create request: %w", err)
+		}
+
+		// Add basic auth header
+		req.Header.Set("Authorization", basicAuth)
+		req.Header.Set("Content-Type", "application/json")
+
+		client := &http.Client{}
+		resp, err := client.Do(req)
+		if err != nil {
+			return nil, fmt.Errorf("failed to send request: %w", err)
+		}
+		defer resp.Body.Close()
+
+		// Check response status
+		if resp.StatusCode != http.StatusOK {
+			bodyBytes, _ := io.ReadAll(resp.Body)
+			return nil, fmt.Errorf("API returned non-OK status: %d with body %s", resp.StatusCode, bodyBytes)
+		}
+
+		// Parse response
+		var productsResp ServusSpeedProductsResponse
+		err = json.NewDecoder(resp.Body).Decode(&productsResp)
+		return &productsResp, err
+	})
 	if err != nil {
-		return nil, fmt.Errorf("failed to send request: %w", err)
-	}
-	defer resp.Body.Close()
-
-	// Check response status
-	if resp.StatusCode != http.StatusOK {
-		bodyBytes, _ := io.ReadAll(resp.Body)
-		return nil, fmt.Errorf("API returned non-OK status: %d, body: %s", resp.StatusCode, string(bodyBytes))
-	}
-
-	// Parse response
-	var productsResp ServusSpeedProductsResponse
-	if err := json.NewDecoder(resp.Body).Decode(&productsResp); err != nil {
-		return nil, fmt.Errorf("failed to decode response: %w", err)
+		return nil, fmt.Errorf("%s: %w", api.GetProviderName(), err)
 	}
 
 	return productsResp.AvailableProducts, nil
@@ -175,40 +182,45 @@ func (api *ServusSpeedApi) getProductDetails(ctx context.Context, productID stri
 		return nil, fmt.Errorf("failed to marshal request body: %w", err)
 	}
 
-	// Create HTTP request with context
 	url := fmt.Sprintf("https://servus-speed.gendev7.check24.fun/api/external/product-details/%s", productID)
-	req, err := http.NewRequestWithContext(ctx, "POST", url, bytes.NewBuffer(reqJSON))
-	if err != nil {
-		return nil, fmt.Errorf("failed to create request: %w", err)
-	}
 
-	// Add basic auth header
 	auth := utils.Cfg.ServusSpeed.Username + ":" + utils.Cfg.ServusSpeed.Password
 	basicAuth := "Basic " + base64.StdEncoding.EncodeToString([]byte(auth))
-	req.Header.Set("Authorization", basicAuth)
-	req.Header.Set("Content-Type", "application/json")
 
 	// Send the request
-	client := &http.Client{}
-	resp, err := client.Do(req)
+	productResp, err := utils.RetryWrapper(ctx, func() (*ServusSpeedProductResponse, error) {
+		// Create HTTP request with context
+		req, err := http.NewRequestWithContext(ctx, "POST", url, bytes.NewBuffer(reqJSON))
+		if err != nil {
+			return nil, fmt.Errorf("failed to create request: %w", err)
+		}
+
+		// Add basic auth header
+		req.Header.Set("Authorization", basicAuth)
+		req.Header.Set("Content-Type", "application/json")
+
+		client := &http.Client{}
+		resp, err := client.Do(req)
+		if err != nil {
+			return nil, fmt.Errorf("failed to send request: %w", err)
+		}
+		defer resp.Body.Close()
+
+		// Check response status
+		if resp.StatusCode != http.StatusOK {
+			bodyBytes, _ := io.ReadAll(resp.Body)
+			return nil, fmt.Errorf("API returned non-OK status: %d with body %s", resp.StatusCode, bodyBytes)
+		}
+		var productResp ServusSpeedProductResponse
+		err = json.NewDecoder(resp.Body).Decode(&productResp)
+		return &productResp, err
+	})
 	if err != nil {
-		return nil, fmt.Errorf("failed to send request: %w", err)
-	}
-	defer resp.Body.Close()
+		return nil, fmt.Errorf("%s: %w", api.GetProviderName(), err)
 
-	// Check response status
-	if resp.StatusCode != http.StatusOK {
-		bodyBytes, _ := io.ReadAll(resp.Body)
-		return nil, fmt.Errorf("API returned non-OK status: %d, body: %s", resp.StatusCode, string(bodyBytes))
 	}
 
-	// Parse response
-	var productResp ServusSpeedProductResponse
-	if err := json.NewDecoder(resp.Body).Decode(&productResp); err != nil {
-		return nil, fmt.Errorf("failed to decode response: %w", err)
-	}
-
-	return &productResp, nil
+	return productResp, nil
 }
 
 func (api *ServusSpeedApi) convertToOffer(product *ServusSpeedProductResponse) domain.Offer {

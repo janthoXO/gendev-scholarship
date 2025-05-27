@@ -60,49 +60,36 @@ func (api *VerbyndichAPI) GetOffersStream(ctx context.Context, address domain.Ad
 		q.Add("page", strconv.Itoa(page))
 		u.RawQuery = q.Encode()
 
-		// Create the request with context
-		req, err := http.NewRequestWithContext(ctx, "POST", u.String(), strings.NewReader(addressStr))
-		if err != nil {
-			select {
-			case <-ctx.Done():
-				return
-			case errChannel <- fmt.Errorf("%s: failed to create request: %w", api.GetProviderName(), err):
-			}
-			return
-		}
-
 		// Send the request
-		client := &http.Client{}
-		resp, err := client.Do(req)
+		response, err := utils.RetryWrapper(ctx, func() (*VerbyndichResponse, error) {
+			// Create the request with context
+			req, err := http.NewRequestWithContext(ctx, "POST", u.String(), strings.NewReader(addressStr))
+			if err != nil {
+				return nil, fmt.Errorf("%s: failed to create request: %w", api.GetProviderName(), err)
+			}
+
+			client := &http.Client{}
+			resp, err := client.Do(req)
+			if err != nil {
+				return nil, err
+			}
+			defer resp.Body.Close()
+
+			// Check the response status
+			if resp.StatusCode != http.StatusOK {
+				bodyBytes, _ := io.ReadAll(resp.Body)
+				return nil, fmt.Errorf("%s: received non-200 response: %d with body %s", api.GetProviderName(), resp.StatusCode, bodyBytes)
+			}
+
+			var response VerbyndichResponse
+			err = json.NewDecoder(resp.Body).Decode(&response)
+			return &response, err
+		})
 		if err != nil {
 			select {
 			case <-ctx.Done():
 				return
-			case errChannel <- fmt.Errorf("%s: failed to send request: %w", api.GetProviderName(), err):
-			}
-			return
-		}
-		defer resp.Body.Close()
-
-		// Check the response status
-		if resp.StatusCode != http.StatusOK {
-			bodyBytes, _ := io.ReadAll(resp.Body)
-			select {
-			case <-ctx.Done():
-				return
-			case errChannel <- fmt.Errorf("%s: API returned non-OK status: %d, body: %s", api.GetProviderName(), resp.StatusCode, string(bodyBytes)):
-			}
-			return
-		}
-
-		// Decode the response
-		var response VerbyndichResponse
-		err = json.NewDecoder(resp.Body).Decode(&response)
-		if err != nil {
-			select {
-			case <-ctx.Done():
-				return
-			case errChannel <- fmt.Errorf("%s: failed to decode response: %w", api.GetProviderName(), err):
+			case errChannel <- err:
 			}
 			return
 		}
@@ -199,7 +186,7 @@ var regexPatterns = []func(string, *domain.Offer) error{
 		if matches := regexPattern.FindStringSubmatch(description); len(matches) > 1 {
 			// matches[0] is the full match, matches[1] is the first capture group
 			offer.MaxAgePerson, _ = strconv.Atoi(matches[1])
-		} 
+		}
 
 		return nil
 	}, //optional

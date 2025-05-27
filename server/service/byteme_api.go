@@ -31,48 +31,38 @@ func (api *ByteMeApi) GetOffersStream(ctx context.Context, address domain.Addres
 	q.Add("city", address.City)
 	q.Add("plz", address.ZipCode)
 	u.RawQuery = q.Encode()
-	// Send the GET request with X-API-Key header
-	req, err := http.NewRequestWithContext(ctx, "GET", u.String(), nil)
-	if err != nil {
-		select {
-		case <-ctx.Done():
-			return
-		case errChannel <- fmt.Errorf("%s: failed to create request: %w", api.GetProviderName(), err):
-		}
-		return
-	}
-	req.Header.Set("X-Api-Key", utils.Cfg.ByteMe.ApiKey)
 
 	// Send the request using the default HTTP client
-	client := &http.Client{}
-	resp, err := client.Do(req)
+	bodyBytes, err := utils.RetryWrapper(ctx, func() ([]byte, error) {
+		// Send the GET request with X-API-Key header
+		req, err := http.NewRequestWithContext(ctx, "GET", u.String(), nil)
+		if err != nil {
+			return nil, fmt.Errorf("%s: failed to create request: %w", api.GetProviderName(), err)
+		}
+		req.Header.Set("X-Api-Key", utils.Cfg.ByteMe.ApiKey)
+
+		client := &http.Client{}
+		resp, err := client.Do(req)
+		if err != nil {
+			return nil, err
+		}
+		defer resp.Body.Close()
+
+		// Check the response status code
+		if resp.StatusCode != http.StatusOK {
+			bodyBytes, _ := io.ReadAll(resp.Body)
+			return nil, fmt.Errorf("%s: received non-200 response: %d with body %s", api.GetProviderName(), resp.StatusCode, bodyBytes)
+		}
+
+		// Read the CSV response
+		return io.ReadAll(resp.Body)
+	})
 	if err != nil {
 		select {
 		case <-ctx.Done():
 			return
-		case errChannel <- fmt.Errorf("%s: failed to send request: %w", api.GetProviderName(), err):
-		}
-		return
-	}
-	defer resp.Body.Close()
+		case errChannel <- err:
 
-	// Check the response status code
-	if resp.StatusCode != http.StatusOK {
-		select {
-		case <-ctx.Done():
-			return
-		case errChannel <- fmt.Errorf("%s, API returned non-OK status: %d", api.GetProviderName(), resp.StatusCode):
-		}
-		return
-	}
-
-	// Read the CSV response
-	bodyBytes, err := io.ReadAll(resp.Body)
-	if err != nil {
-		select {
-		case <-ctx.Done():
-			return
-		case errChannel <- fmt.Errorf("%s: failed to read response body: %w", api.GetProviderName(), err):
 		}
 		return
 	}

@@ -63,58 +63,45 @@ func (api *PingPerfectApi) GetOffersStream(ctx context.Context, address domain.A
 		return
 	}
 
-	// Generate timestamp and signature
-	timestamp := strconv.FormatInt(time.Now().Unix(), 10)
-	signature := generatePingPerfectSignature(requestBody, timestamp, utils.Cfg.PingPerfect.SignatureSecret)
-
-	// Create HTTP request with context
-	req, err := http.NewRequestWithContext(ctx, "POST", "https://pingperfect.gendev7.check24.fun/internet/angebote/data", bytes.NewBuffer(requestBody))
-	if err != nil {
-		select {
-		case <-ctx.Done():
-			return
-		case errChannel <- fmt.Errorf("%s: failed to create request: %w", api.GetProviderName(), err):
-		}
-		return
-	}
-
-	// Set headers
-	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("X-Client-Id", utils.Cfg.PingPerfect.ClientId)
-	req.Header.Set("X-Timestamp", timestamp)
-	req.Header.Set("X-Signature", signature)
-
 	// Send the request
-	client := &http.Client{}
-	resp, err := client.Do(req)
+	products, err := utils.RetryWrapper(ctx, func() ([]PingPerfectProduct, error) {
+		// Generate timestamp and signature
+		timestamp := strconv.FormatInt(time.Now().Unix(), 10)
+		signature := generatePingPerfectSignature(requestBody, timestamp, utils.Cfg.PingPerfect.SignatureSecret)
+
+		// Create HTTP request with context
+		req, err := http.NewRequestWithContext(ctx, "POST", "https://pingperfect.gendev7.check24.fun/internet/angebote/data", bytes.NewBuffer(requestBody))
+		if err != nil {
+			return nil, fmt.Errorf("%s: failed to create request: %w", api.GetProviderName(), err)
+		}
+
+		// Set headers
+		req.Header.Set("Content-Type", "application/json")
+		req.Header.Set("X-Client-Id", utils.Cfg.PingPerfect.ClientId)
+		req.Header.Set("X-Timestamp", timestamp)
+		req.Header.Set("X-Signature", signature)
+		client := &http.Client{}
+		resp, err := client.Do(req)
+		if err != nil {
+			return nil, err
+		}
+		defer resp.Body.Close()
+
+		// Check response status
+		if resp.StatusCode != http.StatusOK {
+			bodyBytes, _ := io.ReadAll(resp.Body)
+			return nil, fmt.Errorf("%s: received non-200 response: %d with body %s", api.GetProviderName(), resp.StatusCode, bodyBytes)
+		}
+
+		var products []PingPerfectProduct
+		err = json.NewDecoder(resp.Body).Decode(&products)
+		return products, err
+	})
 	if err != nil {
 		select {
 		case <-ctx.Done():
 			return
-		case errChannel <- fmt.Errorf("%s: failed to send request: %w", api.GetProviderName(), err):
-		}
-		return
-	}
-	defer resp.Body.Close()
-
-	// Check response status
-	if resp.StatusCode != http.StatusOK {
-		bodyBytes, _ := io.ReadAll(resp.Body)
-		select {
-		case <-ctx.Done():
-			return
-		case errChannel <- fmt.Errorf("%s: API returned non-OK status: %d, body: %s", api.GetProviderName(), resp.StatusCode, string(bodyBytes)):
-		}
-		return
-	}
-
-	// Parse response
-	var products []PingPerfectProduct
-	if err := json.NewDecoder(resp.Body).Decode(&products); err != nil {
-		select {
-		case <-ctx.Done():
-			return
-		case errChannel <- fmt.Errorf("%s: failed to decode response: %w", api.GetProviderName(), err):
+		case errChannel <- err:
 		}
 		return
 	}

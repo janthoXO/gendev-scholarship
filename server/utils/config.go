@@ -23,8 +23,9 @@ type Configuration struct {
 		Password string `env:"USER_OFFER_CACHE_PASSWORD,notEmpty"`
 	}
 	Server struct {
-		Port       uint `env:"SERVER_PORT" envDefault:"8080"`
-		ApiTimeout uint `env:"API_TIMEOUT" envDefault:"30"`
+		Port           uint   `env:"SERVER_PORT" envDefault:"8080"`
+		RetryFrequency []uint `env:"RETRY_FREQUENCY" envDefault:"2,3,5"` // in seconds
+		ApiTimeout     uint   `env:"API_TIMEOUT" envDefault:"30"`
 	}
 	VerbynDich struct {
 		ApiKey string `env:"VERBYNDICH_API_KEY,notEmpty"`
