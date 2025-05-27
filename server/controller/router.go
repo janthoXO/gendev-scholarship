@@ -35,8 +35,49 @@ type FetchOffersQueryParameters struct {
 	SessionId   string `form:"sessionId"`
 }
 
+type FilterOptionParams struct {
+	Provider       *string `form:"provider"`
+	Installation   *bool   `form:"installation"`
+	SpeedMin       *int    `form:"speedMin"`
+	Age            *int    `form:"age"`
+	CostMax        *int    `form:"costMax"`
+	ConnectionType *string `form:"connectionType"`
+}
+
+type OfferFilter func(domain.Offer) bool
+
+func (filter FilterOptionParams) standardFilter(offer domain.Offer) bool {
+	if filter.Provider != nil && offer.Provider != *filter.Provider {
+		return false
+	}
+	if filter.Installation != nil && offer.InstallationService != *filter.Installation {
+		return false
+	}
+	if filter.SpeedMin != nil && offer.Speed < *filter.SpeedMin {
+		return false
+	}
+	if filter.Age != nil && offer.MaxAgePerson < *filter.Age {
+		return false
+	}
+	if filter.CostMax != nil && offer.MonthlyCostInCent > *filter.CostMax {
+		return false
+	}
+	if filter.ConnectionType != nil && offer.ConnectionType != *filter.ConnectionType {
+		return false
+	}
+	return true
+}
+
+func (filter FilterOptionParams) isEmpty() bool {
+	return filter.Provider == nil && filter.Installation == nil && filter.SpeedMin == nil &&
+		filter.Age == nil && filter.CostMax == nil && filter.ConnectionType == nil
+}
+
 func FetchOffersByAddress(c *gin.Context) {
-	var query domain.Query = domain.Query{
+	var userQuery domain.Query = domain.Query{
+		Timestamp: time.Now(),
+	}
+	var addressQuery domain.Query = domain.Query{
 		Timestamp: time.Now(),
 	}
 
@@ -75,29 +116,47 @@ func FetchOffersByAddress(c *gin.Context) {
 	}
 
 	// Create address object
-	query.Address = domain.Address{
+	userQuery.Address = domain.Address{
 		Street:      params.Street,
 		HouseNumber: params.HouseNumber,
 		City:        params.City,
 		ZipCode:     params.ZipCode,
 	}
-	query.SessionID = params.SessionId
+	addressQuery.Address = domain.Address{
+		Street:      params.Street,
+		HouseNumber: params.HouseNumber,
+		City:        params.City,
+		ZipCode:     params.ZipCode,
+	}
+
+	// save session id to user query
+	userQuery.SessionID = params.SessionId
+
+	var filterParams FilterOptionParams
+	if err := c.ShouldBindQuery(&filterParams); err != nil {
+		log.WithError(err).Warn("Failed to parse filter query parameters")
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid filter query parameters"})
+		return
+	}
 
 	// Set status for successful response
 	c.Status(http.StatusOK)
 
-	// Create channels for streaming offers
-	offersChannel := make(chan domain.Offer)
-	errChannel := make(chan error)
-
 	ctx := c.Request.Context()
-	// retrieve cached offers
+
+	// retrieve cached offers for address
 	cachedOffersStreamingDone := make(chan struct{})
 	go func() {
-		cachedQuery, _ := db.OfferCacheInstance.GetCachedQuery(ctx, query)
+		cachedQuery, _ := db.OfferCacheInstance.GetCachedQuery(ctx, addressQuery)
 		if cachedQuery != nil {
-			log.Debugf("Found cached query for address %s", query.Address)
+			log.Debugf("Found cached query for address %s", addressQuery.Address)
 			for _, offer := range cachedQuery.Offers {
+				// Apply filter to all offers
+				if !filterParams.standardFilter(offer) {
+					continue
+				}
+
+				// set preliminary flag to true to indicate that these are cached and not live from api
 				offer.HelperIsPreliminary = true
 				if offerJSON, err := json.Marshal(offer); err == nil {
 					fmt.Fprintf(c.Writer, "{offer: %s}\n", offerJSON)
@@ -109,35 +168,29 @@ func FetchOffersByAddress(c *gin.Context) {
 		close(cachedOffersStreamingDone)
 	}()
 
-	// Start the streaming service and get the completion signal
-	offersFetchingDone := offerService.FetchOffersStream(ctx, query.Address, offersChannel, errChannel)
-	go func() {
-		select {
-		case <-offersFetchingDone:
-			log.Debug("Offers fetching completed")
-			close(offersChannel)
-			close(errChannel)
-		case <-c.Request.Context().Done():
-			log.Debug("Client disconnected while fetching offers")
-		}
-	}()
+	// Start the streaming service
+	offersChannel, errChannel := offerService.FetchOffersStream(ctx, addressQuery.Address)
 
-	offersStreamingDone, offersForCacheChannel := handleOfferStreaming(c, flusher, offersChannel)
-
-	offersCachingDone := make(chan struct{})
+	filteredOffersChannel := make(chan domain.Offer)
 	// Process errors
 	go func() {
 		for {
 			select {
-			case offer, ok := <-offersForCacheChannel:
+			case offer, ok := <-offersChannel:
 				if !ok {
-					db.OfferCacheInstance.CacheQuery(ctx, query)
-					db.UserOfferCacheInstance.CacheQuery(ctx, query)
-					close(offersCachingDone)
+					// cache query with all offers for address
+					// cache query for user with filtered offers
+					db.OfferCacheInstance.CacheQuery(ctx, addressQuery)
+					db.UserOfferCacheInstance.CacheQuery(ctx, userQuery)
+					close(filteredOffersChannel)
 					return
 				}
 
-				query.Offers = append(query.Offers, offer)
+				if filterParams.standardFilter(offer) {
+					userQuery.Offers = append(userQuery.Offers, offer)
+					filteredOffersChannel <- offer
+				}
+				addressQuery.Offers = append(addressQuery.Offers, offer)
 			case err, ok := <-errChannel:
 				if !ok {
 					continue
@@ -151,14 +204,17 @@ func FetchOffersByAddress(c *gin.Context) {
 		}
 	}()
 
-	// Wait for the streaming and caching to finish
+	// handle streaming of offers
+	offersStreamingDone := handleOfferStreaming(c, flusher, filteredOffersChannel, func(o domain.Offer) bool { return true })
+
+	// Wait for the streaming
 	<-cachedOffersStreamingDone
 	<-offersStreamingDone
-	<-offersCachingDone
 
 	// set offers to nil to not send them again
-	query.Offers = nil
-	if queryJSON, err := json.Marshal(query); err == nil {
+	userQuery.Offers = nil
+	if queryJSON, err := json.Marshal(userQuery); err == nil {
+		// Write the query information to the response
 		fmt.Fprintf(c.Writer, "{query: %s}\n", queryJSON)
 		flusher.Flush()
 	}
@@ -190,27 +246,27 @@ func FetchSharedOffers(c *gin.Context) {
 	c.JSON(http.StatusNotImplemented, gin.H{"error": "Shared offers not implemented yet"})
 }
 
-func handleOfferStreaming(c *gin.Context, flusher http.Flusher, offersChannel <-chan domain.Offer) (done chan struct{}, fanOffersChannel chan domain.Offer) {
+func handleOfferStreaming(c *gin.Context, flusher http.Flusher, offersChannel <-chan domain.Offer, filter OfferFilter) (done chan struct{}) {
 	done = make(chan struct{})
-	fanOffersChannel = make(chan domain.Offer)
 
 	go func() {
 		for {
 			select {
 			case offer, ok := <-offersChannel:
 				if !ok {
-					close(fanOffersChannel)
 					close(done)
 					return
 				}
 
-				fanOffersChannel <- offer
-				offer.HelperIsPreliminary = false
-				if offerJSON, err := json.Marshal(offer); err == nil {
-					fmt.Fprintf(c.Writer, "{offer: %s}\n", offerJSON)
-					flusher.Flush()
-				} else {
-					log.WithError(err).Warn("Failed to marshal offer")
+				// If a filter is provided, only send the offer to the client if it matches the filter
+				if filter == nil || filter(offer) {
+					offer.HelperIsPreliminary = false
+					if offerJSON, err := json.Marshal(offer); err == nil {
+						fmt.Fprintf(c.Writer, "{offer: %s}\n", offerJSON)
+						flusher.Flush()
+					} else {
+						log.WithError(err).Warn("Failed to marshal offer")
+					}
 				}
 
 			case <-c.Request.Context().Done():
@@ -219,5 +275,5 @@ func handleOfferStreaming(c *gin.Context, flusher http.Flusher, offersChannel <-
 		}
 	}()
 
-	return done, fanOffersChannel
+	return done
 }
