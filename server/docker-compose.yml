@@ -1,6 +1,6 @@
 services:
   server:
-    image: your-server-image:latest
+    image: ghcr.io/janthoxo/gendev-scholarship:latest
     build:
       context: .
       dockerfile: Dockerfile
