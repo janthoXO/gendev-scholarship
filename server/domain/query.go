@@ -3,13 +3,12 @@ package domain
 import (
 	"crypto/sha256"
 	"encoding/base64"
-	"time"
 )
 
 type Query struct {
 	Offers    []Offer   `json:"offers,omitempty"`
 	Address   Address   `json:"address"`
-	Timestamp time.Time `json:"timestamp"`
+	Timestamp int64 `json:"timestamp"`
 	SessionID string    `json:"sessionId"`
 
 	// helper fields

@@ -11,8 +11,6 @@ import (
 	"server/domain"
 	"server/utils"
 	"sync"
-
-	log "github.com/sirupsen/logrus"
 )
 
 type ServusSpeedApi struct{}
@@ -76,10 +74,6 @@ func (api *ServusSpeedApi) GetOffersStream(ctx context.Context, address domain.A
 
 			product, err := api.getProductDetails(ctx, id, address)
 			if err != nil {
-				// Log the error but continue with other products
-				log.WithError(err).WithField("productID", id).
-					WithField("provider", "ServusSpeed").
-					Warn("Failed to get product details")
 				select {
 				case <-ctx.Done():
 					return

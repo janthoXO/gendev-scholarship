@@ -17,7 +17,7 @@ func RetryWrapper[T any](ctx context.Context, fn RetryableFunc[T]) (ret T, err e
 		return ret, nil // Success
 	}
 
-	for _, delaySeconds := range Cfg.Server.RetryFrequency {
+	for _, delaySeconds := range Cfg.Server.RetryFrequencySec {
 		select {
 		case <-ctx.Done():
 			return ret, ctx.Err()

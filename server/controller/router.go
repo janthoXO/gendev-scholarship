@@ -1,12 +1,15 @@
 package controller
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
+	"io"
 	"net/http"
 	"server/db"
 	"server/domain"
 	"server/service"
+	"server/utils"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -74,11 +77,12 @@ func (filter FilterOptionParams) isEmpty() bool {
 }
 
 func FetchOffersByAddress(c *gin.Context) {
+	now := time.Now().Unix()
 	var userQuery domain.Query = domain.Query{
-		Timestamp: time.Now(),
+		Timestamp: now,
 	}
 	var addressQuery domain.Query = domain.Query{
-		Timestamp: time.Now(),
+		Timestamp: now,
 	}
 
 	flusher, ok := c.Writer.(http.Flusher)
@@ -143,84 +147,113 @@ func FetchOffersByAddress(c *gin.Context) {
 	c.Status(http.StatusOK)
 
 	ctx := c.Request.Context()
+	streamingChannel := make(chan domain.Offer)
+	shouldApiRequest := true
 
 	// retrieve cached offers for address
-	cachedOffersStreamingDone := make(chan struct{})
-	go func() {
-		cachedQuery, _ := db.OfferCacheInstance.GetCachedQuery(ctx, addressQuery)
-		if cachedQuery != nil {
-			log.Debugf("Found cached query for address %s", addressQuery.Address)
+	cachedOffersInStream := make(chan struct{})
+	cachedQuery, _ := db.OfferCacheInstance.GetCachedQuery(ctx, addressQuery)
+	if cachedQuery != nil {
+		log.Debugf("Found cached query for address %s", addressQuery.Address)
+		shouldApiRequest = now-cachedQuery.Timestamp > utils.Cfg.Server.ApiCooldownSec
+
+		go func() {
 			for _, offer := range cachedQuery.Offers {
 				// Apply filter to all offers
 				if !filterParams.standardFilter(offer) {
 					continue
 				}
 
-				// set preliminary flag to true to indicate that these are cached and not live from api
-				offer.HelperIsPreliminary = true
-				if offerJSON, err := json.Marshal(offer); err == nil {
-					fmt.Fprintf(c.Writer, "{offer: %s}\n", offerJSON)
-					flusher.Flush()
-				}
+				// if a new request gonna happen, set preliminary flag to true to indicate that these are cached and not live from api
+				offer.HelperIsPreliminary = shouldApiRequest
+				streamingChannel <- offer
 			}
-		}
-		log.Debug("Cached offers streaming done")
-		close(cachedOffersStreamingDone)
-	}()
+			log.Debug("Cached offers streaming done")
+			close(cachedOffersInStream)
+		}()
+	} else {
+		close(cachedOffersInStream)
+	}
 
-	// Start the streaming service
-	offersChannel, errChannel := offerService.FetchOffersStream(ctx, addressQuery.Address)
+	var offersStreamingDone <-chan struct{}
+	if shouldApiRequest {
+		// Start the streaming service
+		offersChannel, errChannel := offerService.FetchOffersStream(ctx, addressQuery.Address)
+		// Process errors
+		go func() {
+			for {
+				select {
+				case err, ok := <-errChannel:
+					if !ok {
+						continue
+					}
+					log.WithError(err).Warn("Error while fetching offers")
 
-	filteredOffersChannel := make(chan domain.Offer)
-	// Process errors
-	go func() {
-		for {
-			select {
-			case offer, ok := <-offersChannel:
-				if !ok {
-					// cache query with all offers for address
-					// cache query for user with filtered offers
-					db.OfferCacheInstance.CacheQuery(ctx, addressQuery)
-					db.UserOfferCacheInstance.CacheQuery(ctx, userQuery)
-					close(filteredOffersChannel)
+				case <-ctx.Done():
+					// Context cancelled, stop processing
 					return
 				}
-
-				if filterParams.standardFilter(offer) {
-					userQuery.Offers = append(userQuery.Offers, offer)
-					filteredOffersChannel <- offer
-				}
-				addressQuery.Offers = append(addressQuery.Offers, offer)
-			case err, ok := <-errChannel:
-				if !ok {
-					continue
-				}
-				log.WithError(err).Warn("Error while fetching offers")
-
-			case <-c.Request.Context().Done():
-				// Signal that we've finished writing the stream
-				return
 			}
-		}
-	}()
+		}()
+		userOfferChannel, _ := cacheOffers(ctx, addressQuery, offersChannel, db.OfferCacheInstance.CacheQuery, nil)
+		filteredOffersChannel, _ := cacheOffers(ctx, userQuery, userOfferChannel, db.UserOfferCacheInstance.CacheQuery, filterParams.standardFilter)
 
-	// handle streaming of offers
-	offersStreamingDone := handleOfferStreaming(c, flusher, filteredOffersChannel, func(o domain.Offer) bool { return true })
+		liveOffersInStream := make(chan struct{})
+		go func() {
+			for {
+				select {
+				case offer, ok := <-filteredOffersChannel:
+					if !ok {
+						// all offers are processed, close the channel to signal all live offers are in streaming channel
+						close(liveOffersInStream)
+						log.Debug("Live offers streaming done")
+						return
+					}
+
+					// set preliminary flag to false to indicate that these are live from api
+					offer.HelperIsPreliminary = false
+					streamingChannel <- offer
+				case <-ctx.Done():
+					// Context cancelled, stop processing
+					close(streamingChannel)
+					return
+				}
+			}
+		}()
+
+		offersStreamingDone = handleOfferStreaming(ctx, c.Writer, flusher, streamingChannel, nil)
+
+		// wait until all cached offers are in streaming channel
+		<-cachedOffersInStream
+		// wait until all live offers are in streaming channel
+		<-liveOffersInStream
+		close(streamingChannel)
+	} else {
+		log.Debug("Using cached offers for address, no new API request will be made")
+
+		// offers by cache are counted as valid as no new api request is made
+		// therefore they need to be saved in the user cache
+		cachedOffers, _ := cacheOffers(ctx, userQuery, streamingChannel, db.UserOfferCacheInstance.CacheQuery, nil)
+		offersStreamingDone = handleOfferStreaming(ctx, c.Writer, flusher, cachedOffers, nil)
+
+		// wait until cached offers are all in streaming channel
+		<-cachedOffersInStream
+		close(streamingChannel)
+	}
 
 	// Wait for the streaming
-	<-cachedOffersStreamingDone
 	<-offersStreamingDone
 
 	// set offers to nil to not send them again
 	userQuery.Offers = nil
 	if queryJSON, err := json.Marshal(userQuery); err == nil {
 		// Write the query information to the response
-		fmt.Fprintf(c.Writer, "{query: %s}\n", queryJSON)
+		fmt.Fprintf(c.Writer, "{\"query\": %s}\n", queryJSON)
 		flusher.Flush()
 	}
 
 	// write query related information to the response
-	log.Debug("Stream successfully closed")
+	log.Debug("Stream successfully closed\n")
 }
 
 func ShareOffer(c *gin.Context) {
@@ -246,7 +279,42 @@ func FetchSharedOffers(c *gin.Context) {
 	c.JSON(http.StatusNotImplemented, gin.H{"error": "Shared offers not implemented yet"})
 }
 
-func handleOfferStreaming(c *gin.Context, flusher http.Flusher, offersChannel <-chan domain.Offer, filter OfferFilter) (done chan struct{}) {
+func cacheOffers(ctx context.Context, query domain.Query, offersChannel <-chan domain.Offer, cacheFunc func(ctx context.Context, query domain.Query) error, filter OfferFilter) (<-chan domain.Offer, <-chan struct{}) {
+	done := make(chan struct{})
+	cachedOffersChannel := make(chan domain.Offer)
+
+	go func() {
+		for {
+			select {
+			case offer, ok := <-offersChannel:
+				if !ok {
+					// Cache the offers for the address
+					if err := cacheFunc(ctx, query); err != nil {
+						log.WithError(err).Error("Failed to cache offers for address")
+					}
+					close(cachedOffersChannel)
+					close(done)
+					return
+				}
+				if filter == nil || filter(offer) {
+					// Send the offer to the fanout channel
+					cachedOffersChannel <- offer
+					// Also append the offer to the address query for caching
+					query.Offers = append(query.Offers, offer)
+				}
+			case <-ctx.Done():
+				// Context cancelled, stop processing
+				close(cachedOffersChannel)
+				close(done)
+				return
+			}
+		}
+	}()
+
+	return cachedOffersChannel, done
+}
+
+func handleOfferStreaming(c context.Context, writer io.Writer, flusher http.Flusher, offersChannel <-chan domain.Offer, filter OfferFilter) (done chan struct{}) {
 	done = make(chan struct{})
 
 	go func() {
@@ -260,16 +328,17 @@ func handleOfferStreaming(c *gin.Context, flusher http.Flusher, offersChannel <-
 
 				// If a filter is provided, only send the offer to the client if it matches the filter
 				if filter == nil || filter(offer) {
-					offer.HelperIsPreliminary = false
 					if offerJSON, err := json.Marshal(offer); err == nil {
-						fmt.Fprintf(c.Writer, "{offer: %s}\n", offerJSON)
+						fmt.Fprintf(writer, "{\"offer\": %s}\n", offerJSON)
 						flusher.Flush()
 					} else {
 						log.WithError(err).Warn("Failed to marshal offer")
 					}
 				}
 
-			case <-c.Request.Context().Done():
+			case <-c.Done():
+				// Context cancelled, stop processing
+				close(done)
 				return
 			}
 		}

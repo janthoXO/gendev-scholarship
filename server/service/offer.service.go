@@ -21,7 +21,7 @@ var providers = []InternetProviderAPI{
 func (service OfferServiceImpl) FetchOffersStream(ctx context.Context, address domain.Address) (<-chan domain.Offer, <-chan error) {
 	// Create a parent context with the API timeout as a control mechanism
 	// We derive from the incoming context so that client disconnects are properly propagated
-	timeoutCtx, timeoutCancel := context.WithTimeout(ctx, time.Duration(utils.Cfg.Server.ApiTimeout)*time.Second)
+	timeoutCtx, timeoutCancel := context.WithTimeout(ctx, time.Duration(utils.Cfg.Server.ApiTimeoutSec)*time.Second)
 
 	// Create a done channel to signal completion
 	offersChannel := make(chan domain.Offer)

@@ -13,6 +13,7 @@ import (
 func main() {
 	// Load environment variables
 	cfg := utils.LoadConfig()
+	log.Infof("Loaded configuration: %+v", cfg.Server)
 
 	// Initialize Redis client
 	db.InitOfferCache()
