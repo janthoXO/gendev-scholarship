@@ -15,7 +15,7 @@ ENV GOOS=linux
 # We don't set GOARCH to allow for multi-architecture builds
 
 # Build the application (will use the builder's architecture)
-RUN go build -o internet-provider-app ./cmd/
+RUN go build -o internet-provider-app .
 
 FROM gcr.io/distroless/base-debian12 AS build-release-stage
 
