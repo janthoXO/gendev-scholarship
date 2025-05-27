@@ -242,11 +242,6 @@ func (api *ServusSpeedApi) convertToOffer(product *ServusSpeedProductResponse) d
 	return offer
 }
 
-func (api *ServusSpeedApi) AcceptOffer(offerID string) (string, error) {
-	// Not implemented for this challenge
-	return "", nil
-}
-
 func (api *ServusSpeedApi) GetProviderName() string {
 	return "ServusSpeed"
 }

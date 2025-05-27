@@ -243,11 +243,6 @@ func (api *WebWunderApi) soapProductToOffer(product WebWunderSoapProduct) (offer
 	return offer
 }
 
-func (api *WebWunderApi) AcceptOffer(offerID string) (string, error) {
-	// Not implemented for this challenge
-	return "", nil
-}
-
 func (api *WebWunderApi) GetProviderName() string {
 	return "WebWunder"
 }

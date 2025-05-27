@@ -152,11 +152,6 @@ func generatePingPerfectSignature(requestBody []byte, timestamp, signatureSecret
 	return hex.EncodeToString(h.Sum(nil))
 }
 
-func (api *PingPerfectApi) AcceptOffer(offerID string) (string, error) {
-	// Not implemented for this challenge
-	return "", nil
-}
-
 func (api *PingPerfectApi) GetProviderName() string {
 	return "PingPerfect"
 }

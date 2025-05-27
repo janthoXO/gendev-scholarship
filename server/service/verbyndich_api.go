@@ -213,11 +213,6 @@ func (api *VerbyndichAPI) parseVerbyndichDescription(description string, offer *
 	return nil
 }
 
-func (api *VerbyndichAPI) AcceptOffer(offerID string) (string, error) {
-	// Not implemented for this challenge
-	return "", nil
-}
-
 func (api *VerbyndichAPI) GetProviderName() string {
 	return "VerbynDich"
 }

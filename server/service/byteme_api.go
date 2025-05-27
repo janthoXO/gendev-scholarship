@@ -153,11 +153,6 @@ func (api *ByteMeApi) mapToOffer(item map[string]interface{}) (offer domain.Offe
 	return offer
 }
 
-func (api *ByteMeApi) AcceptOffer(offerID string) (string, error) {
-	// Not implemented for this challenge
-	return "", nil
-}
-
 func (api *ByteMeApi) GetProviderName() string {
 	return "ByteMe"
 }

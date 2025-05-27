@@ -7,6 +7,5 @@ import (
 
 type InternetProviderAPI interface {
 	GetOffersStream(ctx context.Context, address domain.Address, offersChannel chan<- domain.Offer, errChannel chan<- error)
-	AcceptOffer(offerID string) (string, error)
 	GetProviderName() string
 }
