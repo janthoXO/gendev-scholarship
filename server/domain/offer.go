@@ -8,23 +8,23 @@ import (
 
 type Offer struct {
 	// product details
-	
+
 	Provider                     string            `json:"provider"`
-	ProductID                    int               `json:"productId"`
+	ProductID                    int               `json:"productId,omitzero"`
 	ProductName                  string            `json:"ProductName"`
 	Speed                        int               `json:"speed"`
 	ContractDurationInMonths     int               `json:"contractDurationInMonths"`
 	ConnectionType               string            `json:"connectionType"`
-	Tv                           string            `json:"tv"`
-	LimitInGb                    int               `json:"limitInGb"`
-	MaxAgePerson                 int               `json:"maxAgePerson"`
+	Tv                           string            `json:"tv,omitzero"`
+	LimitInGb                    int               `json:"limitInGb,omitzero"`
+	MaxAgePerson                 int               `json:"maxAgePerson,omitzero"`
 	MonthlyCostInCent            int               `json:"monthlyCostInCent"`
-	AfterTwoYearsMonthlyCost     int               `json:"afterTwoYearsMonthlyCost"`
-	MonthlyCostInCentWithVoucher int               `json:"monthlyCostInCentWithVoucher"`
+	AfterTwoYearsMonthlyCost     int               `json:"afterTwoYearsMonthlyCost,omitzero"`
+	MonthlyCostInCentWithVoucher int               `json:"monthlyCostInCentWithVoucher,omitzero"`
 	InstallationService          bool              `json:"installationService"`
-	VoucherType                  string            `json:"voucherType"`
-	VoucherValue                 int               `json:"voucherValue"`
-	ExtraProperties              map[string]string `json:"extraProperties"`
+	VoucherType                  string            `json:"voucherType,omitzero"`
+	VoucherValue                 int               `json:"voucherValue,omitzero"`
+	ExtraProperties              map[string]string `json:"extraProperties,omitzero"`
 
 	// helper fields
 
