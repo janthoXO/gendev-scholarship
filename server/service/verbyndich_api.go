@@ -23,7 +23,7 @@ type VerbyndichResponse struct {
 	Valid       bool   `json:"valid"`
 }
 
-func (api *VerbyndichAPI) GetOffersStream(ctx context.Context, address domain.Address, offersChannel chan<- domain.Offer, errChannel chan<- error) {
+func (api *VerbyndichAPI) GetOffersStream(ctx context.Context, address domain.Address, offersChannel *utils.PubSubChannel[domain.Offer], errChannel chan<- error) {
 	// Format the address as required: "street;house number;city;plz"
 	addressStr := fmt.Sprintf("%s;%s;%s;%s",
 		address.Street,
@@ -104,10 +104,12 @@ func (api *VerbyndichAPI) GetOffersStream(ctx context.Context, address domain.Ad
 			// Parse the description to extract offer details
 			if err := api.parseVerbyndichDescription(response.Description, &offer); err == nil {
 				offer.Provider = api.GetProviderName()
+				offer.HelperIsPreliminary = false
+				offersChannel.Publish(offer)
 				select {
 				case <-ctx.Done():
 					return
-				case offersChannel <- offer:
+				default:
 				}
 			}
 		}

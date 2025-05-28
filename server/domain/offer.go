@@ -8,6 +8,7 @@ import (
 
 type Offer struct {
 	// product details
+	
 	Provider                     string            `json:"provider"`
 	ProductID                    int               `json:"productId"`
 	ProductName                  string            `json:"ProductName"`
@@ -26,6 +27,7 @@ type Offer struct {
 	ExtraProperties              map[string]string `json:"extraProperties"`
 
 	// helper fields
+
 	// hash over product details
 	HelperOfferHash     string `json:"offerHash"`
 	HelperIsPreliminary bool   `json:"isPreliminary"`

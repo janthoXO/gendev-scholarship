@@ -50,7 +50,7 @@ type ServusSpeedProductResponse struct {
 	} `json:"servusSpeedProduct"`
 }
 
-func (api *ServusSpeedApi) GetOffersStream(ctx context.Context, address domain.Address, offersChannel chan<- domain.Offer, errChannel chan<- error) {
+func (api *ServusSpeedApi) GetOffersStream(ctx context.Context, address domain.Address, offersChannel *utils.PubSubChannel[domain.Offer], errChannel chan<- error) {
 	// Step 1: Get the list of available product IDs
 	productIDs, err := api.getAvailableProducts(ctx, address)
 	if err != nil {
@@ -85,12 +85,14 @@ func (api *ServusSpeedApi) GetOffersStream(ctx context.Context, address domain.A
 			// Convert to domain.Offer
 			offer := api.convertToOffer(product)
 			offer.Provider = api.GetProviderName()
+			offer.HelperIsPreliminary = false
 
 			// Write directly to the passed channel
+			offersChannel.Publish(offer)
 			select {
 			case <-ctx.Done():
 				return
-			case offersChannel <- offer:
+			default:
 			}
 		}(productID)
 	}

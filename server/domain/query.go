@@ -12,8 +12,9 @@ type Query struct {
 	SessionID string    `json:"sessionId"`
 
 	// helper fields
-	// hash over address, timestamp and offers
-	HelperAddressHash string `json:"-"`
+
+	// hash over address
+	HelperAddressHash string `json:"addressHash"`
 }
 
 func (q *Query) GenerateAddressHash()  {

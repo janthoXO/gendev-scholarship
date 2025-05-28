@@ -18,13 +18,13 @@ var providers = []InternetProviderAPI{
 	&WebWunderApi{},
 }
 
-func (service OfferServiceImpl) FetchOffersStream(ctx context.Context, address domain.Address) (<-chan domain.Offer, <-chan error) {
+func (service OfferServiceImpl) FetchOffersStream(ctx context.Context, address domain.Address) (*utils.PubSubChannel[domain.Offer], <-chan error) {
 	// Create a parent context with the API timeout as a control mechanism
 	// We derive from the incoming context so that client disconnects are properly propagated
 	timeoutCtx, timeoutCancel := context.WithTimeout(ctx, time.Duration(utils.Cfg.Server.ApiTimeoutSec)*time.Second)
 
 	// Create a done channel to signal completion
-	offersChannel := make(chan domain.Offer)
+	offersChannel := utils.NewPubSubChannel[domain.Offer]()
 	errChannel := make(chan error)
 
 	var wg sync.WaitGroup
@@ -57,7 +57,7 @@ func (service OfferServiceImpl) FetchOffersStream(ctx context.Context, address d
 		wg.Wait()
 
 		// Signal that all providers are done
-		close(offersChannel)
+		offersChannel.Close()
 		close(errChannel)
 
 		// Cleanup

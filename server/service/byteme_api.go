@@ -12,7 +12,7 @@ import (
 
 type ByteMeApi struct{}
 
-func (api *ByteMeApi) GetOffersStream(ctx context.Context, address domain.Address, offersChannel chan<- domain.Offer, errChannel chan<- error) {
+func (api *ByteMeApi) GetOffersStream(ctx context.Context, address domain.Address, offersChannel *utils.PubSubChannel[domain.Offer], errChannel chan<- error) {
 	// Construct the API endpoint URL
 	baseURL := "https://byteme.gendev7.check24.fun/app/api/products/data"
 	u, err := url.Parse(baseURL)
@@ -82,10 +82,12 @@ func (api *ByteMeApi) GetOffersStream(ctx context.Context, address domain.Addres
 	for _, item := range csvMaps {
 		offer := api.mapToOffer(item)
 		offer.Provider = api.GetProviderName()
+		offer.HelperIsPreliminary = false
+		offersChannel.Publish(offer)
 		select {
 		case <-ctx.Done():
 			return
-		case offersChannel <- offer:
+		default:
 		}
 	}
 }

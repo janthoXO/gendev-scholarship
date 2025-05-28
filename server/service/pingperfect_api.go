@@ -42,7 +42,7 @@ type PingPerfectProduct struct {
 	} `json:"pricingDetails,omitempty"`
 }
 
-func (api *PingPerfectApi) GetOffersStream(ctx context.Context, address domain.Address, offersChannel chan<- domain.Offer, errChannel chan<- error) {
+func (api *PingPerfectApi) GetOffersStream(ctx context.Context, address domain.Address, offersChannel *utils.PubSubChannel[domain.Offer], errChannel chan<- error) {
 	// Create request payload
 	requestData := PingPerfectRequest{
 		Street:      address.Street,
@@ -110,10 +110,12 @@ func (api *PingPerfectApi) GetOffersStream(ctx context.Context, address domain.A
 	for _, product := range products {
 		offer := api.productToOffer(product)
 		offer.Provider = api.GetProviderName()
+		offer.HelperIsPreliminary = false
+		offersChannel.Publish(offer)
 		select {
 		case <-ctx.Done():
 			return
-		case offersChannel <- offer:
+		default:
 		}
 	}
 }

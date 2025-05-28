@@ -106,7 +106,7 @@ const (
 	ConnectionTypeMobile = "MOBILE"
 )
 
-func (api *WebWunderApi) GetOffersStream(ctx context.Context, address domain.Address, offersChannel chan<- domain.Offer, errChannel chan<- error) {
+func (api *WebWunderApi) GetOffersStream(ctx context.Context, address domain.Address, offersChannel *utils.PubSubChannel[domain.Offer], errChannel chan<- error) {
 	// TODO if no connection type specified, query all in parallel
 
 	// TODO if installation not specified, try both per connection type
@@ -200,10 +200,12 @@ func (api *WebWunderApi) GetOffersStream(ctx context.Context, address domain.Add
 	for _, product := range soapResponse.Body.Output.Products {
 		offer := api.soapProductToOffer(product)
 		offer.Provider = api.GetProviderName()
+		offer.HelperIsPreliminary = false
+		offersChannel.Publish(offer)
 		select {
 		case <-ctx.Done():
 			return
-		case offersChannel <- offer:
+		default:
 		}
 	}
 }

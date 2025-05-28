@@ -156,8 +156,7 @@ func FetchOffersByAddress(c *gin.Context) {
 
 	// retrieve cached offers for address
 	cachedOffersInStream := make(chan struct{})
-	cachedQuery, _ := db.OfferCacheInstance.GetCachedQuery(ctx, addressQuery)
-	if cachedQuery != nil {
+	if cachedQuery, _ := db.OfferCacheInstance.GetCachedQuery(ctx, addressQuery); cachedQuery != nil {
 		log.Debugf("Found cached query for address %s", addressQuery.Address)
 		shouldApiRequest = now-cachedQuery.Timestamp > utils.Cfg.Server.ApiCooldownSec
 
@@ -167,7 +166,6 @@ func FetchOffersByAddress(c *gin.Context) {
 				offer.HelperIsPreliminary = shouldApiRequest
 				combinedOfferChannel <- offer
 			}
-			log.Debug("Cached offers streaming done")
 			close(cachedOffersInStream)
 		}()
 	} else {
@@ -177,17 +175,16 @@ func FetchOffersByAddress(c *gin.Context) {
 	var offersStreamingDone <-chan struct{}
 	if shouldApiRequest {
 		// Start the streaming service
-		liveOffersChannel, errChannel := offerService.FetchOffersStream(ctx, addressQuery.Address)
+		liveOffersPubSubChannel, errChannel := offerService.FetchOffersStream(ctx, addressQuery.Address)
 		// Process errors
 		go func() {
 			for {
 				select {
 				case err, ok := <-errChannel:
 					if !ok {
-						continue
+						return
 					}
 					log.WithError(err).Warn("Error while fetching offers")
-
 				case <-ctx.Done():
 					// Context cancelled, stop processing
 					return
@@ -195,52 +192,58 @@ func FetchOffersByAddress(c *gin.Context) {
 			}
 		}()
 		// save all live offers in address cache so that if multiple users with different filters request the same address, they can use cached offers
-		addressCachedOfferChannel, _ := cacheOffers(ctx, addressQuery, liveOffersChannel, db.OfferCacheInstance.CacheQuery, nil)
+		_, addressCacheDone := cacheOffers(ctx, &addressQuery, liveOffersPubSubChannel.Subscribe(), db.OfferCacheInstance.CacheQuery, false)
 
+		// put live offers into combined stream to stream to output
 		liveOffersInStream := make(chan struct{})
-		go func() {
+		go func(liveOffersChannel <-chan domain.Offer) {
 			for {
 				select {
-				case offer, ok := <-addressCachedOfferChannel:
+				case offer, ok := <-liveOffersChannel:
 					if !ok {
 						// all offers are processed, close the channel to signal all live offers are in streaming channel
 						close(liveOffersInStream)
-						log.Debug("Live offers streaming done")
 						return
 					}
 
-					// set preliminary flag to false to indicate that these are live from api
-					offer.HelperIsPreliminary = false
 					combinedOfferChannel <- offer
 				case <-ctx.Done():
 					// Context cancelled, stop processing
-					close(combinedOfferChannel)
+					close(liveOffersInStream)
 					return
 				}
 			}
-		}()
+		}(liveOffersPubSubChannel.Subscribe())
 
 		// cache offers for user which are preliminary and live to ensure share links with both contained
-		userCachedOfferChannel, _ := cacheOffers(ctx, userQuery, combinedOfferChannel, db.UserOfferCacheInstance.CacheQuery, nil)
+		userCachedOfferChannel, _ := cacheOffers(ctx, &userQuery, combinedOfferChannel, db.UserOfferCacheInstance.CacheQuery, true)
 
 		// stream everything that is cached for later sharing to the user
-		offersStreamingDone = handleOfferStreaming(ctx, c.Writer, flusher, userCachedOfferChannel, nil)
+		offersStreamingDone = handleOfferStreaming(ctx, c.Writer, flusher, userCachedOfferChannel)
 
 		// wait until all cached offers are in streaming channel
 		<-cachedOffersInStream
+		log.Debug("Cached offers in combined stream")
 		// wait until all live offers are in streaming channel
 		<-liveOffersInStream
+		log.Debug("Live offers in combined stream")
+
 		close(combinedOfferChannel)
+
+		// wait until all offers cached for address before closing request
+		<-addressCacheDone
+		log.Debug("caching offers for address done")
 	} else {
 		log.Debug("Using cached offers for address, no new API request will be made")
 
 		// offers by cache are counted as valid as no new api request is made
 		// therefore they need to be saved in the user cache
-		cachedOffers, _ := cacheOffers(ctx, userQuery, combinedOfferChannel, db.UserOfferCacheInstance.CacheQuery, nil)
-		offersStreamingDone = handleOfferStreaming(ctx, c.Writer, flusher, cachedOffers, nil)
+		cachedOffers, _ := cacheOffers(ctx, &userQuery, combinedOfferChannel, db.UserOfferCacheInstance.CacheQuery, false)
+		offersStreamingDone = handleOfferStreaming(ctx, c.Writer, flusher, cachedOffers)
 
 		// wait until cached offers are all in streaming channel
 		<-cachedOffersInStream
+		log.Debug("Cached offers in combined stream")
 		close(combinedOfferChannel)
 	}
 
@@ -283,7 +286,7 @@ func FetchSharedOffers(c *gin.Context) {
 	c.JSON(http.StatusNotImplemented, gin.H{"error": "Shared offers not implemented yet"})
 }
 
-func cacheOffers(ctx context.Context, query domain.Query, offersChannel <-chan domain.Offer, cacheFunc func(ctx context.Context, query domain.Query) error) (<-chan domain.Offer, <-chan struct{}) {
+func cacheOffers(ctx context.Context, query *domain.Query, offersChannel <-chan domain.Offer, cacheFunc func(ctx context.Context, query domain.Query) error, isUserCache bool) (<-chan domain.Offer, <-chan struct{}) {
 	done := make(chan struct{})
 	cachedOffersChannel := make(chan domain.Offer)
 
@@ -293,7 +296,7 @@ func cacheOffers(ctx context.Context, query domain.Query, offersChannel <-chan d
 			case offer, ok := <-offersChannel:
 				if !ok {
 					// Cache the offers for the address
-					if err := cacheFunc(ctx, query); err != nil {
+					if err := cacheFunc(ctx, *query); err != nil {
 						log.WithError(err).Error("Failed to cache offers for address")
 					}
 					close(cachedOffersChannel)
@@ -304,6 +307,7 @@ func cacheOffers(ctx context.Context, query domain.Query, offersChannel <-chan d
 					// Generate hash for the offer if not already set
 					offer.GenerateHash()
 				}
+
 				offerInQuery, exists := query.Offers[offer.HelperOfferHash]
 				if !exists || offerInQuery.HelperIsPreliminary {
 					// Send the offer to the fanout channel
@@ -314,6 +318,7 @@ func cacheOffers(ctx context.Context, query domain.Query, offersChannel <-chan d
 				}
 			case <-ctx.Done():
 				// Context cancelled, stop processing
+				log.Debug("Context cancelled, stopping offer caching")
 				close(cachedOffersChannel)
 				close(done)
 				return
@@ -345,6 +350,7 @@ func handleOfferStreaming(c context.Context, writer io.Writer, flusher http.Flus
 
 			case <-c.Done():
 				// Context cancelled, stop processing
+				log.Debug("Context cancelled, stopping offer streaming")
 				close(done)
 				return
 			}
