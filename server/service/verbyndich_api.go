@@ -104,7 +104,6 @@ func (api *VerbyndichAPI) GetOffersStream(ctx context.Context, address domain.Ad
 			// Parse the description to extract offer details
 			if err := api.parseVerbyndichDescription(response.Description, &offer); err == nil {
 				offer.Provider = api.GetProviderName()
-				offer.HelperOfferHash = offer.GetHash()
 				select {
 				case <-ctx.Done():
 					return

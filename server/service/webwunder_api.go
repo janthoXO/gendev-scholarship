@@ -200,7 +200,6 @@ func (api *WebWunderApi) GetOffersStream(ctx context.Context, address domain.Add
 	for _, product := range soapResponse.Body.Output.Products {
 		offer := api.soapProductToOffer(product)
 		offer.Provider = api.GetProviderName()
-		offer.HelperOfferHash = offer.GetHash()
 		select {
 		case <-ctx.Done():
 			return

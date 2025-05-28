@@ -110,7 +110,6 @@ func (api *PingPerfectApi) GetOffersStream(ctx context.Context, address domain.A
 	for _, product := range products {
 		offer := api.productToOffer(product)
 		offer.Provider = api.GetProviderName()
-		offer.HelperOfferHash = offer.GetHash()
 		select {
 		case <-ctx.Done():
 			return

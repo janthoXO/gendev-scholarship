@@ -85,7 +85,6 @@ func (api *ServusSpeedApi) GetOffersStream(ctx context.Context, address domain.A
 			// Convert to domain.Offer
 			offer := api.convertToOffer(product)
 			offer.Provider = api.GetProviderName()
-			offer.HelperOfferHash = offer.GetHash()
 
 			// Write directly to the passed channel
 			select {

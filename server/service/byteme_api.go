@@ -82,7 +82,6 @@ func (api *ByteMeApi) GetOffersStream(ctx context.Context, address domain.Addres
 	for _, item := range csvMaps {
 		offer := api.mapToOffer(item)
 		offer.Provider = api.GetProviderName()
-		offer.HelperOfferHash = offer.GetHash()
 		select {
 		case <-ctx.Done():
 			return

@@ -31,11 +31,11 @@ type Offer struct {
 	HelperIsPreliminary bool   `json:"isPreliminary"`
 }
 
-func (o *Offer) GetHash() string {
+func (o *Offer) GenerateHash() {
 	h := sha256.New()
 	h.Write(fmt.Appendf(nil, "%s%d%s%d%d%s%s%d%d%d%d%d%t%s%d%v", o.Provider, o.ProductID, o.ProductName,
 		o.Speed, o.ContractDurationInMonths, o.ConnectionType, o.Tv, o.LimitInGb, o.MaxAgePerson,
 		o.MonthlyCostInCent, o.AfterTwoYearsMonthlyCost, o.MonthlyCostInCentWithVoucher, o.InstallationService,
 		o.VoucherType, o.VoucherValue, o.ExtraProperties))
-    return base64.RawURLEncoding.EncodeToString(h.Sum(nil))
+	o.HelperOfferHash = base64.RawURLEncoding.EncodeToString(h.Sum(nil))
 }
