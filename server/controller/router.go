@@ -140,7 +140,6 @@ func FetchOffersByAddress(c *gin.Context) {
 	// save session id to user query
 	userQuery.SessionID = params.SessionId
 
-	// set offers to nil to not send them again
 	if queryJSON, err := json.Marshal(userQuery); err == nil {
 		// Write the query information to the response
 		fmt.Fprintf(c.Writer, "{\"query\": %s}\n", queryJSON)
@@ -192,7 +191,8 @@ func FetchOffersByAddress(c *gin.Context) {
 			}
 		}()
 		// save all live offers in address cache so that if multiple users with different filters request the same address, they can use cached offers
-		_, addressCacheDone := cacheOffers(ctx, &addressQuery, liveOffersPubSubChannel.Subscribe(), db.OfferCacheInstance.CacheQuery, false)
+		dumpChan, addressCacheDone := cacheOffers(ctx, &addressQuery, liveOffersPubSubChannel.Subscribe(), db.OfferCacheInstance.CacheQuery, false)
+		utils.DumpChannel(dumpChan)
 
 		// put live offers into combined stream to stream to output
 		liveOffersInStream := make(chan struct{})
@@ -296,6 +296,7 @@ func cacheOffers(ctx context.Context, query *domain.Query, offersChannel <-chan 
 			case offer, ok := <-offersChannel:
 				if !ok {
 					// Cache the offers for the address
+					log.Debugf("Caching %d offers", len(query.Offers))
 					if err := cacheFunc(ctx, *query); err != nil {
 						log.WithError(err).Error("Failed to cache offers for address")
 					}
