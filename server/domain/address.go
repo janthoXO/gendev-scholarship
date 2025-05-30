@@ -2,7 +2,7 @@ package domain
 
 type Address struct {
 	Street  string `json:"street"`
-	HouseNumber   string `json:"house-number"`
+	HouseNumber   string `json:"houseNumber"`
 	City    string `json:"city"`
-	ZipCode string `json:"zip-code"`
+	ZipCode string `json:"zipCode"`
 }

@@ -1,0 +1,257 @@
+<div class="container-fluid bg-light min-vh-100">
+  <!-- Fixed Header with Search and Filters -->
+  <div class="sticky-top bg-white border-bottom shadow-sm">
+    <div class="container">
+      <!-- Search Bar Row -->
+      <div class="row py-3">
+        <div class="col-lg-8">
+          <form
+            (ngSubmit)="onSearchSubmit()"
+            class="needs-validation"
+            novalidate
+          >
+            <div class="row g-2">
+              <div class="col-md-4">
+                <input
+                  type="text"
+                  id="searchStreet"
+                  class="form-control form-control-sm"
+                  placeholder="Street"
+                  [value]="addressSearch().street"
+                  (input)="onSearchInput($event, 'street')"
+                  required
+                />
+              </div>
+              <div class="col-md-2">
+                <input
+                  type="text"
+                  id="searchHouseNumber"
+                  class="form-control form-control-sm"
+                  placeholder="No."
+                  [value]="addressSearch().houseNumber"
+                  (input)="onSearchInput($event, 'houseNumber')"
+                  required
+                />
+              </div>
+              <div class="col-md-3">
+                <input
+                  type="text"
+                  id="searchCity"
+                  class="form-control form-control-sm"
+                  placeholder="City"
+                  [value]="addressSearch().city"
+                  (input)="onSearchInput($event, 'city')"
+                  required
+                />
+              </div>
+              <div class="col-md-2">
+                <input
+                  type="text"
+                  id="searchZipCode"
+                  class="form-control form-control-sm"
+                  placeholder="ZIP"
+                  [value]="addressSearch().zipCode"
+                  (input)="onSearchInput($event, 'zipCode')"
+                  pattern="[0-9]{5}"
+                  required
+                />
+              </div>
+              <div class="col-md-1">
+                <button
+                  type="submit"
+                  class="btn btn-primary btn-sm w-100"
+                  [disabled]="!isSearchFormValid()"
+                  title="Search"
+                >
+                  <fa-icon [icon]="faSearch"></fa-icon>
+                </button>
+              </div>
+            </div>
+          </form>
+        </div>
+
+        <div
+          class="col-lg-4 d-flex align-items-center justify-content-end gap-3"
+        >
+          <!-- Share Button -->
+          <button
+            class="btn btn-outline-success btn-sm"
+            (click)="shareQuery()"
+            title="Share this search"
+          >
+            <i class="fas fa-share-alt me-1"></i>
+            Share
+          </button>
+
+          <!-- Results Count -->
+          @if (state.isLoading()) {
+          <div class="d-flex align-items-center">
+            <div
+              class="spinner-border spinner-border-sm text-primary me-2"
+              role="status"
+            >
+              <span class="visually-hidden">Loading...</span>
+            </div>
+            <span class="text-muted">Searching...</span>
+          </div>
+          } @else {
+          <span class="badge bg-success fs-6"
+            >{{ filteredOffers().length }} offers found</span
+          >
+          }
+        </div>
+      </div>
+
+      <!-- Filter Pills Row -->
+      <div class="row pb-3">
+        <div class="col-12">
+          <div class="d-flex align-items-center gap-3 flex-wrap">
+            <!-- Filter Controls -->
+            <div class="d-flex align-items-center gap-2 flex-wrap">
+              <select
+                class="form-select form-select-sm"
+                style="width: auto"
+                [(ngModel)]="filter().provider"
+              >
+                <option value="">All Providers</option>
+                @for (provider of availableProviders(); track provider) {
+                <option [value]="provider">{{ provider }}</option>
+                }
+              </select>
+
+              <select
+                class="form-select form-select-sm"
+                style="width: auto"
+                [(ngModel)]="filter().connectionType"
+              >
+                <option value="">All Types</option>
+                @for (type of availableConnectionTypes(); track type) {
+                <option [value]="type">{{ type }}</option>
+                }
+              </select>
+
+              <input
+                type="number"
+                class="form-control form-control-sm"
+                style="width: 120px"
+                [(ngModel)]="filter().speedMin"
+                placeholder="Min Speed"
+                min="0"
+              />
+
+              <input
+                type="number"
+                class="form-control form-control-sm"
+                style="width: 120px"
+                [(ngModel)]="filter().costMax"
+                placeholder="Max Cost €"
+                min="0"
+              />
+
+              <div class="form-check form-switch">
+                <input
+                  class="form-check-input"
+                  type="checkbox"
+                  role="switch"
+                  id="requireInstallation"
+                  [(ngModel)]="filter().installation"
+                />
+                <label class="form-check-label" for="requireInstallation">
+                  Installation
+                </label>
+              </div>
+            </div>
+
+            <!-- Active Filters -->
+            @if (activeFilters().length > 0) {
+            <div class="d-flex align-items-center gap-2 flex-wrap">
+              @for (filter of activeFilters(); track filter.type) {
+              <span
+                class="badge bg-primary d-flex align-items-center gap-1 px-2 py-1"
+              >
+                {{ filter.label }}
+                <button
+                  type="button"
+                  class="btn-close btn-close-white"
+                  style="font-size: 0.6rem"
+                  (click)="removeFilter(filter.type)"
+                  aria-label="Remove filter"
+                ></button>
+              </span>
+              }
+              <button
+                class="btn btn-sm btn-outline-danger"
+                (click)="clearFilters()"
+              >
+                <i class="fas fa-times me-1"></i>
+                Clear All
+              </button>
+            </div>
+            }
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="container pt-4">
+    <!-- Loading State -->
+    @if (state.isLoading() && filteredOffers().length === 0) {
+    <div class="text-center py-5">
+      <div class="d-flex justify-content-center mb-4">
+        <div
+          class="spinner-border text-primary"
+          role="status"
+          style="width: 3rem; height: 3rem"
+        >
+          <span class="visually-hidden">Loading...</span>
+        </div>
+      </div>
+      <h4 class="text-muted mb-2">
+        Fetching offers from multiple providers...
+      </h4>
+      <p class="text-muted">This may take a few moments</p>
+    </div>
+    }
+
+    <!-- Error State -->
+    @if (state.error(); as error) {
+    <div class="alert alert-danger border-0 shadow-sm text-center" role="alert">
+      <div class="mb-3">
+        <i class="fas fa-exclamation-triangle fa-2x text-danger"></i>
+      </div>
+      <h4 class="alert-heading">Error Loading Offers</h4>
+      <p class="mb-3">{{ error }}</p>
+      <button class="btn btn-danger" (click)="retrySearch()">
+        <i class="fas fa-redo me-1"></i>
+        Try Again
+      </button>
+    </div>
+    }
+
+    <!-- Results -->
+    @if (filteredOffers().length > 0) {
+    <div class="row g-4">
+      @for (offer of filteredOffers(); track offer.offerHash) {
+      <div class="col-md-6 col-lg-4">
+        <app-offer-card [offer]="offer"></app-offer-card>
+      </div>
+      }
+    </div>
+    } @else if (!state.isLoading() && !state.error()) {
+    <div class="text-center py-5">
+      <div class="mb-4">
+        <i class="fas fa-search fa-3x text-muted"></i>
+      </div>
+      <h4 class="text-muted mb-2">No offers found</h4>
+      <p class="text-muted mb-4">
+        Try adjusting your filters or search criteria.
+      </p>
+      <button class="btn btn-primary" (click)="clearFilters()">
+        <i class="fas fa-filter me-1"></i>
+        Clear Filters
+      </button>
+    </div>
+    }
+  </div>
+</div>

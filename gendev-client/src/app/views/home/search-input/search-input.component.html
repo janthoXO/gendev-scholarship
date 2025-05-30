@@ -1,0 +1,72 @@
+<div class="search-container">
+  <div class="search-box" [class.expanded]="isExpanded()">
+    <div class="search-icon" (click)="toggleExpanded()">
+      <svg
+        width="20"
+        height="20"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+      >
+        <circle cx="11" cy="11" r="8"></circle>
+        <path d="M21 21l-4.35-4.35"></path>
+      </svg>
+    </div>
+
+    @if (isExpanded()) {
+    <form (ngSubmit)="onSubmit()" class="search-form">
+      <div class="form-group">
+        <input
+          type="text"
+          [(ngModel)]="street"
+          name="street"
+          placeholder="Street"
+          class="form-input"
+          required
+        />
+      </div>
+
+      <div class="form-group">
+        <input
+          type="text"
+          [(ngModel)]="houseNumber"
+          name="houseNumber"
+          placeholder="House Number"
+          class="form-input"
+          required
+        />
+      </div>
+
+      <div class="form-group">
+        <input
+          type="text"
+          [(ngModel)]="city"
+          name="city"
+          placeholder="City"
+          class="form-input"
+          required
+        />
+      </div>
+
+      <div class="form-group">
+        <input
+          type="text"
+          [(ngModel)]="zipCode"
+          name="zipCode"
+          placeholder="ZIP Code"
+          class="form-input"
+          required
+        />
+      </div>
+
+      <button type="submit" class="search-button" [disabled]="!isFormValid()">
+        Search Offers
+      </button>
+    </form>
+    } @else {
+    <div class="search-placeholder" (click)="toggleExpanded()">
+      Search for internet offers by address...
+    </div>
+    }
+  </div>
+</div>
