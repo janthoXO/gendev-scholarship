@@ -1,194 +1,189 @@
 <div class="container-fluid bg-light min-vh-100">
-  <!-- Fixed Header with Search and Filters -->
-  <div class="sticky-top bg-white border-bottom shadow-sm">
-    <div class="container">
-      <!-- Search Bar Row -->
-      <div class="row py-3">
-        <div class="col-lg-8">
-          <form
-            (ngSubmit)="onSearchSubmit()"
-            class="needs-validation"
-            novalidate
-          >
-            <div class="row g-2">
-              <div class="col-md-4">
-                <input
-                  type="text"
-                  id="searchStreet"
-                  class="form-control form-control-sm"
-                  placeholder="Street"
-                  [value]="addressSearch().street"
-                  (input)="onSearchInput($event, 'street')"
-                  required
-                />
+  <!-- Apple-inspired Fixed Header using Bootstrap -->
+  <div class="sticky-top bg-white bg-opacity-95 border-bottom shadow-sm backdrop-blur">
+    <div class="container-xxl">
+      <!-- Main Search Section -->
+      <div class="py-3">
+        <div class="row align-items-center">
+          <div class="col-lg-8">
+            <form (ngSubmit)="onSearchSubmit()" novalidate>
+              <div class="d-flex gap-2 align-items-stretch flex-wrap">
+                <div class="flex-fill" style="min-width: 150px;">
+                  <input
+                    type="text"
+                    id="searchStreet"
+                    class="form-control rounded-3"
+                    placeholder="Street"
+                    [value]="addressSearch().street"
+                    (input)="onSearchInput($event, 'street')"
+                    required
+                  />
+                </div>
+                <div class="flex-md-grow-0" style="flex: 0 0 80px; min-width: 70px;">
+                  <input
+                    type="text"
+                    id="searchHouseNumber"
+                    class="form-control rounded-3"
+                    placeholder="No."
+                    [value]="addressSearch().houseNumber"
+                    (input)="onSearchInput($event, 'houseNumber')"
+                    required
+                  />
+                </div>
+                <div class="flex-fill" style="min-width: 120px;">
+                  <input
+                    type="text"
+                    id="searchCity"
+                    class="form-control rounded-3"
+                    placeholder="City"
+                    [value]="addressSearch().city"
+                    (input)="onSearchInput($event, 'city')"
+                    required
+                  />
+                </div>
+                <div class="flex-md-grow-0" style="flex: 0 0 80px; min-width: 70px;">
+                  <input
+                    type="text"
+                    id="searchZipCode"
+                    class="form-control rounded-3"
+                    placeholder="ZIP"
+                    [value]="addressSearch().zipCode"
+                    (input)="onSearchInput($event, 'zipCode')"
+                    pattern="[0-9]{5}"
+                    required
+                  />
+                </div>
+                <div class="flex-md-grow-0" style="flex: 0 0 44px; min-width: 44px;">
+                  <button
+                    type="submit"
+                    class="btn btn-primary w-100 h-100 rounded-3"
+                    [disabled]="!isSearchFormValid()"
+                    title="Search"
+                  >
+                    <fa-icon [icon]="faSearch"></fa-icon>
+                  </button>
+                </div>
               </div>
-              <div class="col-md-2">
-                <input
-                  type="text"
-                  id="searchHouseNumber"
-                  class="form-control form-control-sm"
-                  placeholder="No."
-                  [value]="addressSearch().houseNumber"
-                  (input)="onSearchInput($event, 'houseNumber')"
-                  required
-                />
-              </div>
-              <div class="col-md-3">
-                <input
-                  type="text"
-                  id="searchCity"
-                  class="form-control form-control-sm"
-                  placeholder="City"
-                  [value]="addressSearch().city"
-                  (input)="onSearchInput($event, 'city')"
-                  required
-                />
-              </div>
-              <div class="col-md-2">
-                <input
-                  type="text"
-                  id="searchZipCode"
-                  class="form-control form-control-sm"
-                  placeholder="ZIP"
-                  [value]="addressSearch().zipCode"
-                  (input)="onSearchInput($event, 'zipCode')"
-                  pattern="[0-9]{5}"
-                  required
-                />
-              </div>
-              <div class="col-md-1">
-                <button
-                  type="submit"
-                  class="btn btn-primary btn-sm w-100"
-                  [disabled]="!isSearchFormValid()"
-                  title="Search"
-                >
-                  <fa-icon [icon]="faSearch"></fa-icon>
-                </button>
-              </div>
-            </div>
-          </form>
-        </div>
-
-        <div
-          class="col-lg-4 d-flex align-items-center justify-content-end gap-3"
-        >
-          <!-- Share Button -->
-          <button
-            class="btn btn-outline-success btn-sm"
-            (click)="shareQuery()"
-            title="Share this search"
-          >
-            <i class="fas fa-share-alt me-1"></i>
-            Share
-          </button>
-
-          <!-- Results Count -->
-          @if (state.isLoading()) {
-          <div class="d-flex align-items-center">
-            <div
-              class="spinner-border spinner-border-sm text-primary me-2"
-              role="status"
-            >
-              <span class="visually-hidden">Loading...</span>
-            </div>
-            <span class="text-muted">Searching...</span>
+            </form>
           </div>
-          } @else {
-          <span class="badge bg-success fs-6"
-            >{{ filteredOffers().length }} offers found</span
-          >
-          }
+
+          <div class="col-lg-4 d-flex align-items-center justify-content-end">
+            <div class="d-flex align-items-center gap-3">
+              <!-- Share Button -->
+              <button
+                class="btn btn-outline-primary rounded-pill"
+                (click)="shareQuery()"
+                title="Share this search"
+              >
+                <fa-icon [icon]="faShareAlt" class="pe-1"></fa-icon>                 
+                Share
+              </button>
+
+              <!-- Results Count -->
+              @if (state.isLoading()) {
+              <div class="d-flex align-items-center text-muted">
+                <div class="spinner-border spinner-border-sm me-2" role="status">
+                  <span class="visually-hidden fs-6">Loading...</span>
+                </div>
+                <small>Searching...</small>
+              </div>
+              } @else {
+              <span class="badge bg-success rounded-pill p-2 fs-6">
+                {{ filteredOffers().length }} offers
+              </span>
+              }
+            </div>
+          </div>
         </div>
       </div>
 
-      <!-- Filter Pills Row -->
-      <div class="row pb-3">
-        <div class="col-12">
-          <div class="d-flex align-items-center gap-3 flex-wrap">
-            <!-- Filter Controls -->
-            <div class="d-flex align-items-center gap-2 flex-wrap">
-              <select
-                class="form-select form-select-sm"
-                style="width: auto"
-                [(ngModel)]="filter().provider"
-              >
-                <option value="">All Providers</option>
-                @for (provider of availableProviders(); track provider) {
-                <option [value]="provider">{{ provider }}</option>
-                }
-              </select>
-
-              <select
-                class="form-select form-select-sm"
-                style="width: auto"
-                [(ngModel)]="filter().connectionType"
-              >
-                <option value="">All Types</option>
-                @for (type of availableConnectionTypes(); track type) {
-                <option [value]="type">{{ type }}</option>
-                }
-              </select>
-
-              <input
-                type="number"
-                class="form-control form-control-sm"
-                style="width: 120px"
-                [(ngModel)]="filter().speedMin"
-                placeholder="Min Speed"
-                min="0"
-              />
-
-              <input
-                type="number"
-                class="form-control form-control-sm"
-                style="width: 120px"
-                [(ngModel)]="filter().costMax"
-                placeholder="Max Cost €"
-                min="0"
-              />
-
-              <div class="form-check form-switch">
-                <input
-                  class="form-check-input"
-                  type="checkbox"
-                  role="switch"
-                  id="requireInstallation"
-                  [(ngModel)]="filter().installation"
-                />
-                <label class="form-check-label" for="requireInstallation">
-                  Installation
-                </label>
-              </div>
-            </div>
-
-            <!-- Active Filters -->
-            @if (activeFilters().length > 0) {
-            <div class="d-flex align-items-center gap-2 flex-wrap">
-              @for (filter of activeFilters(); track filter.type) {
-              <span
-                class="badge bg-primary d-flex align-items-center gap-1 px-2 py-1"
-              >
-                {{ filter.label }}
-                <button
-                  type="button"
-                  class="btn-close btn-close-white"
-                  style="font-size: 0.6rem"
-                  (click)="removeFilter(filter.type)"
-                  aria-label="Remove filter"
-                ></button>
-              </span>
+      <!-- Filter Section -->
+      <div class="pb-3 border-top border-light">
+        <div class="pt-3">
+          <div class="d-flex align-items-center gap-2 gap-md-3 flex-wrap">
+            <select
+              class="form-select form-select-sm rounded-2 flex-shrink-0"
+              [(ngModel)]="filter().provider"
+              (ngModelChange)="updateFilter('provider', $event)"
+              style="width: auto; min-width: 140px;"
+            >
+              <option value="" selected>All Providers</option>
+              @for (provider of availableProviders(); track provider) {
+              <option [value]="provider">{{ provider }}</option>
               }
-              <button
-                class="btn btn-sm btn-outline-danger"
-                (click)="clearFilters()"
-              >
-                <i class="fas fa-times me-1"></i>
-                Clear All
-              </button>
+            </select>
+
+            <select
+              class="form-select form-select-sm rounded-2 flex-shrink-0"
+              [(ngModel)]="filter().connectionType"
+              (ngModelChange)="updateFilter('connectionType', $event)"
+              style="width: auto; min-width: 140px;"
+            >
+              <option value="" selected>All Types</option>
+              @for (type of availableConnectionTypes(); track type) {
+              <option [value]="type">{{ type }}</option>
+              }
+            </select>
+
+            <input
+              type="number"
+              class="form-control form-control-sm rounded-2 flex-shrink-0"
+              style="width: 140px;"
+              [(ngModel)]="filter().speedMin"
+              (ngModelChange)="updateFilter('speedMin', $event)"
+              placeholder="Min Speed (Mbps)"
+              min="0"
+            />
+
+            <input
+              type="number"
+              class="form-control form-control-sm rounded-2 flex-shrink-0"
+              style="width: 140px;"
+              [(ngModel)]="filter().costMax"
+              (ngModelChange)="updateFilter('costMax', $event)"
+              placeholder="Max Cost (€)"
+              min="0"
+            />
+
+            <div class="form-check form-switch">
+              <input
+                class="form-check-input"
+                type="checkbox"
+                role="switch"
+                id="requireInstallation"
+                [(ngModel)]="filter().installation"
+                (ngModelChange)="updateFilter('installation', $event)"
+              />
+              <label class="form-check-label fw-medium" for="requireInstallation">
+                Installation
+              </label>
             </div>
-            }
           </div>
+
+          <!-- Active Filters -->
+          @if (activeFilters().length > 0) {
+          <div class="d-flex align-items-center gap-2 flex-wrap mt-3">
+            @for (filter of activeFilters(); track filter.type) {
+            <span class="badge bg-primary bg-opacity-10 text-primary border border-primary rounded-pill d-flex align-items-center gap-1 p-2">
+              <small class="fw-medium">{{ filter.label }}</small>
+              <button
+                type="button"
+                class="btn-close"
+                style="font-size: 0.6rem;"
+                (click)="removeFilter(filter.type)"
+                aria-label="Remove filter"
+              ></button>
+            </span>
+            }
+            <button 
+              class="btn btn-sm btn-outline-danger rounded-pill"
+              (click)="clearFilters()"
+            >
+              <fa-icon [icon]="faClose"></fa-icon>
+              Clear All
+            </button>
+          </div>
+          }
         </div>
       </div>
     </div>
@@ -218,12 +213,14 @@
     @if (state.error(); as error) {
     <div class="alert alert-danger border-0 shadow-sm text-center" role="alert">
       <div class="mb-3">
+        <fa-icon [icon]="faExclamationTriangle" class="text-danger"></fa-icon>
+
         <i class="fas fa-exclamation-triangle fa-2x text-danger"></i>
       </div>
       <h4 class="alert-heading">Error Loading Offers</h4>
       <p class="mb-3">{{ error }}</p>
       <button class="btn btn-danger" (click)="retrySearch()">
-        <i class="fas fa-redo me-1"></i>
+        <fa-icon [icon]="faRedo"></fa-icon>
         Try Again
       </button>
     </div>

@@ -82,7 +82,6 @@ export class State {
     this._query.set(null);
     this._isLoading.set(false);
     this._error.set(null);
-    this._sessionId.set('');
   }
 
   generateSessionId(): string {

@@ -1,90 +1,20 @@
-/* Enhanced styling for offer-results component using Bootstrap */
+/* Minimal Apple-inspired enhancements - relying primarily on Bootstrap */
 
-/* Search input group custom styling */
-.input-group-text {
-  border-right: none;
+/* Backdrop blur effect for header */
+.backdrop-blur {
+  backdrop-filter: saturate(180%) blur(20px);
+  -webkit-backdrop-filter: saturate(180%) blur(20px);
 }
 
-.form-control:focus {
-  border-left: none;
-  box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.25);
+/* Apple-style focus enhancement for inputs */
+.form-control:focus,
+.form-select:focus {
+  border-color: #007aff !important;
+  box-shadow: 0 0 0 0.25rem rgba(0, 122, 255, 0.1) !important;
 }
 
-/* Card hover effects */
-.card {
-  transition: all 0.3s ease;
-}
-
-.card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15) !important;
-}
-
-/* Button hover effects */
-.btn {
-  transition: all 0.2s ease;
-}
-
-.btn:hover {
+/* Subtle hover effect for buttons */
+.btn:hover:not(:disabled) {
   transform: translateY(-1px);
-}
-
-/* Badge animations */
-.badge {
-  animation: fadeIn 0.3s ease-in;
-  transition: all 0.2s ease;
-}
-
-.badge:hover {
-  transform: scale(1.05);
-}
-
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-    transform: scale(0.8);
-  }
-  to {
-    opacity: 1;
-    transform: scale(1);
-  }
-}
-
-/* Form element enhancements */
-.form-select:focus,
-.form-control:focus {
-  transform: translateY(-1px);
-  box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.25);
-}
-
-/* Smooth scrolling behavior */
-html {
-  scroll-behavior: smooth;
-}
-
-/* Offcanvas custom styling */
-.offcanvas {
-  min-width: 400px;
-}
-
-@media (max-width: 767px) {
-  .offcanvas {
-    min-width: 100vw;
-  }
-}
-
-/* Responsive adjustments */
-@media (max-width: 768px) {
-  .search-info h1 {
-    font-size: 1.2rem;
-  }
-  
-  .search-info p {
-    font-size: 0.8rem;
-  }
-  
-  .btn-lg {
-    padding: 0.5rem 1rem;
-    font-size: 1rem;
-  }
+  transition: transform 0.2s ease;
 }

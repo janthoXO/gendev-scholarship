@@ -11,17 +11,17 @@ export interface FilterOptions {
 
 export function isFilterEmpty(filterOptions: FilterOptions): boolean {
   return (
-    !filterOptions.provider &&
+    (!filterOptions.provider || filterOptions.provider.trim() === '') &&
     !filterOptions.installation &&
     !filterOptions.speedMin &&
     !filterOptions.age &&
     !filterOptions.costMax &&
-    !filterOptions.connectionType
+    (!filterOptions.connectionType || filterOptions.connectionType.trim() === '')
   );
 }
 
 export function filterOffer(offer: Offer, filterOptions: FilterOptions): boolean {
-  if (filterOptions.provider && offer.provider !== filterOptions.provider) {
+  if (filterOptions.provider && filterOptions.provider.trim() !== '' && offer.provider !== filterOptions.provider) {
     return false;
   }
   if (filterOptions.installation !== undefined && offer.installationService !== filterOptions.installation) {
@@ -36,7 +36,7 @@ export function filterOffer(offer: Offer, filterOptions: FilterOptions): boolean
   if (filterOptions.costMax !== undefined && offer.monthlyCostInCent > filterOptions.costMax * 100) {
     return false;
   }
-  if (filterOptions.connectionType && offer.connectionType !== filterOptions.connectionType) {
+  if (filterOptions.connectionType && filterOptions.connectionType.trim() !== '' && offer.connectionType !== filterOptions.connectionType) {
     return false;
   }
   

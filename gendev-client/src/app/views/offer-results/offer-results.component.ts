@@ -1,22 +1,24 @@
 import {
   Component,
   computed,
-  OnInit,
-  OnDestroy,
   signal,
   effect,
 } from '@angular/core';
-import { ActivatedRoute, Router } from '@angular/router';
+import { Router } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Address, isAddressEmpty } from '../../models/address.model';
 import { State } from '../../services/state';
 import { SearchService } from '../../services/search.service';
-import { NdjsonResponse } from '../../models/response.model';
 import { OfferCardComponent } from '../../components/offer-card/offer-card.component';
-import { Subscription } from 'rxjs';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
-import { faSearch } from '@fortawesome/free-solid-svg-icons';
+import {
+  faSearch,
+  faShareAlt,
+  faClose,
+  faRedo,
+  faExclamationTriangle,
+} from '@fortawesome/free-solid-svg-icons';
 import {
   filterOffer,
   FilterOptions,
@@ -30,9 +32,12 @@ import {
   styleUrl: './offer-results.component.css',
   standalone: true,
 })
-export class OfferResultsComponent implements OnInit, OnDestroy {
-  private subscription?: Subscription;
-  protected faSearch = faSearch
+export class OfferResultsComponent {
+  protected faSearch = faSearch;
+  protected faShareAlt = faShareAlt;
+  protected faClose = faClose;
+  protected faRedo = faRedo;
+  protected faExclamationTriangle = faExclamationTriangle;
 
   private offers = computed(() => {
     const offersMap = this.state.query()?.offers;
@@ -40,11 +45,11 @@ export class OfferResultsComponent implements OnInit, OnDestroy {
   });
 
   filter = signal<FilterOptions>({
-    provider: undefined,
+    provider: '',
     installation: undefined,
     speedMin: undefined,
     costMax: undefined,
-    connectionType: undefined,
+    connectionType: '',
   });
 
   addressSearch = signal<Address>({
@@ -82,40 +87,44 @@ export class OfferResultsComponent implements OnInit, OnDestroy {
   // Active filters for display as bubbles
   activeFilters = computed(() => {
     const filters = [];
+    const currentFilter = this.filter();
 
-    if (this.filter()?.provider) {
+    if (currentFilter?.provider && currentFilter.provider.trim() !== '') {
       filters.push({
         type: 'provider',
-        label: `Provider: ${this.filter()?.provider}`,
-        value: this.filter()?.provider,
+        label: `Provider: ${currentFilter.provider}`,
+        value: currentFilter.provider,
       });
     }
 
-    if (this.filter()?.connectionType) {
+    if (
+      currentFilter?.connectionType &&
+      currentFilter.connectionType.trim() !== ''
+    ) {
       filters.push({
         type: 'connectionType',
-        label: `Type: ${this.filter()?.connectionType}`,
-        value: this.filter()?.connectionType,
+        label: `Type: ${currentFilter.connectionType}`,
+        value: currentFilter.connectionType,
       });
     }
 
-    if (this.filter()?.speedMin) {
+    if (currentFilter?.speedMin) {
       filters.push({
         type: 'minSpeed',
-        label: `Min Speed: ${this.filter()?.speedMin} Mbps`,
-        value: this.filter()?.speedMin,
+        label: `Min Speed: ${currentFilter.speedMin} Mbps`,
+        value: currentFilter.speedMin,
       });
     }
 
-    if (this.filter()?.costMax) {
+    if (currentFilter?.costMax) {
       filters.push({
         type: 'maxCost',
-        label: `Max Cost: €${this.filter()?.costMax}`,
-        value: this.filter()?.costMax,
+        label: `Max Cost: €${currentFilter.costMax}`,
+        value: currentFilter.costMax,
       });
     }
 
-    if (this.filter()?.installation) {
+    if (currentFilter?.installation) {
       filters.push({
         type: 'installation',
         label: 'Installation Required',
@@ -127,13 +136,14 @@ export class OfferResultsComponent implements OnInit, OnDestroy {
   });
 
   constructor(
-    private route: ActivatedRoute,
     private router: Router,
     protected state: State,
     private searchService: SearchService
   ) {
     effect(() => {
       const query = this.state.query();
+      console.log(query)
+      console.log(this.addressSearch())
       if (isAddressEmpty(this.addressSearch()) && query?.address) {
         this.addressSearch.set({
           street: query.address.street,
@@ -145,48 +155,23 @@ export class OfferResultsComponent implements OnInit, OnDestroy {
     });
   }
 
-  ngOnInit() {
-    // Check if this is a shared route first
-    let sharedUuid: string | null = null;
-    let address: Address | null = null;
-
-    this.route.params.subscribe((params) => {
-      if (params['uuid']) {
-        sharedUuid = params['uuid'];
-        console.log('Shared UUID:', sharedUuid);
-      }
+  resetComponent() {
+    this.filter.set({
+      provider: '',
+      installation: undefined,
+      speedMin: undefined,
+      costMax: undefined,
+      connectionType: '',
     });
 
-    // If not shared route, check for query parameters (regular search)
-    this.route.queryParams.subscribe((queryParams) => {
-      if (
-        queryParams['street'] &&
-        queryParams['houseNumber'] &&
-        queryParams['city'] &&
-        queryParams['zipCode']
-      ) {
-        address = {
-          street: queryParams['street'],
-          houseNumber: queryParams['houseNumber'],
-          city: queryParams['city'],
-          zipCode: queryParams['zipCode'],
-        };
-      }
+    this.addressSearch.set({
+      street: '',
+      houseNumber: '',
+      city: '',
+      zipCode: '',
     });
 
-    if (sharedUuid) {
-      this.loadSharedOffers(sharedUuid);
-    } else if (address) {
-      this.startSearch(address);
-    } else {
-      // If no address and no shared UUID, redirect to home
-      console.error('No address or shared UUID provided, redirecting to home');
-      this.router.navigate(['/']);
-    }
-  }
-
-  ngOnDestroy() {
-    this.subscription?.unsubscribe();
+    this.state.resetState();
   }
 
   loadSharedOffers(uuid: string) {
@@ -204,45 +189,17 @@ export class OfferResultsComponent implements OnInit, OnDestroy {
     this.state.setLoading(false);
   }
 
-  startSearch(address: Address) {
-    const sessionId = this.state.sessionId();
-
-    if (!sessionId) {
-      this.router.navigate(['/']);
-      return;
-    }
-
-    this.state.setLoading(true);
-    this.state.setError(null);
-
-    this.subscription = this.searchService
-      .searchOffers(address, sessionId)
-      .subscribe({
-        next: (response: NdjsonResponse) => {
-          this.state.handleNdjsonResponse(response);
-        },
-        error: (error) => {
-          console.error('Search error:', error);
-          this.state.setError('Failed to fetch offers. Please try again.');
-          this.state.setLoading(false);
-        },
-        complete: () => {
-          this.state.setLoading(false);
-        },
-      });
-  }
-
   retrySearch() {
     this.router.navigate(['/']);
   }
 
   clearFilters() {
     this.filter.set({
-      provider: undefined,
+      provider: '',
       installation: undefined,
       speedMin: undefined,
       costMax: undefined,
-      connectionType: undefined,
+      connectionType: '',
     });
   }
 
@@ -251,13 +208,13 @@ export class OfferResultsComponent implements OnInit, OnDestroy {
       case 'provider':
         this.filter.set({
           ...this.filter(),
-          provider: undefined,
+          provider: '',
         });
         break;
       case 'connectionType':
         this.filter.set({
           ...this.filter(),
-          connectionType: undefined,
+          connectionType: '',
         });
         break;
       case 'minSpeed':
@@ -279,6 +236,14 @@ export class OfferResultsComponent implements OnInit, OnDestroy {
         });
         break;
     }
+  }
+
+  updateFilter(field: string, value: any) {
+    const currentFilter = this.filter();
+    this.filter.set({
+      ...currentFilter,
+      [field]: value,
+    });
   }
 
   hasActiveFilters(): boolean {
@@ -332,14 +297,17 @@ export class OfferResultsComponent implements OnInit, OnDestroy {
       zipCode: this.addressSearch().zipCode.trim(),
     };
 
+    this.resetComponent();
+
     // Navigate to search with the new address
-    this.router.navigate(['/offer-results'], {
+    this.router.navigate(['/offers'], {
       queryParams: {
         street: newAddress.street,
         houseNumber: newAddress.houseNumber,
         city: newAddress.city,
         zipCode: newAddress.zipCode,
       },
+
     });
   }
 
@@ -365,9 +333,5 @@ export class OfferResultsComponent implements OnInit, OnDestroy {
       .catch((err) => {
         console.error('Failed to copy URL:', err);
       });
-  }
-
-  goBack() {
-    this.router.navigate(['/']);
   }
 }

@@ -7,11 +7,11 @@ export const routes: Routes = [
   },
   {
     path: 'offers',
-    loadComponent: () => import('./views/offer-results/offer-results.component').then(m => m.OfferResultsComponent)
+    loadComponent: () => import('./views/offer-search/offer-search.component').then(m => m.OfferSearchComponent)
   },
   {
     path: 'offers/shared/:uuid',
-    loadComponent: () => import('./views/offer-results/offer-results.component').then(m => m.OfferResultsComponent)
+    loadComponent: () => import('./views/offer-shared/offer-shared.component').then(m => m.OfferSharedComponent)
   },
   {
     path: '**',
