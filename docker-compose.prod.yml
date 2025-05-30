@@ -1,9 +1,3 @@
-# Full-stack Docker Compose for GenDev Scholarship Application
-# This includes both server and client docker-compose configurations
-
-include:
-  - server/docker-compose.yml
-
 services:
   reverse-proxy:
     image: traefik:v3.4
@@ -27,10 +21,7 @@ services:
       - ./letsencrypt:/letsencrypt
 
   server:
-    image: ghcr.io/janthoxo/gendev-scholarship:latest
-    build:
-      context: .
-      dockerfile: Dockerfile
+    image: ghcr.io/janthoxo/gendev-scholarship/server:latest
     ports:
       - "3030:3030"
     environment:
@@ -40,7 +31,7 @@ services:
       - SHARE_DB_PASSWORD=${SHARE_DB_PASSWORD}
       - OFFER_CACHE_URL=offer-cache:6379
       - OFFER_CACHE_PASSWORD=${OFFER_CACHE_PASSWORD}
-      - USER_OFFER_CACHE_URL=offer-cache:6379
+      - USER_OFFER_CACHE_URL=user-offer-cache:6379
       - USER_OFFER_CACHE_PASSWORD=${USER_OFFER_CACHE_PASSWORD}
       - SERVER_PORT=3030
       - API_TIMEOUT=${API_TIMEOUT:-60}
@@ -69,7 +60,7 @@ services:
     image: redis:8.0.1
     command: redis-server --requirepass ${OFFER_CACHE_PASSWORD}
     ports:
-      - "6379:6379"
+      - ":6379"
     volumes:
       - offer_data:/data
     environment:
@@ -80,7 +71,7 @@ services:
     image: redis:8.0.1
     command: redis-server --requirepass ${USER_OFFER_CACHE_PASSWORD}
     ports:
-      - "6380:6379"
+      - ":6379"
     volumes:
       - user_offer_data:/data
     environment:
@@ -90,7 +81,7 @@ services:
   share-db:
     image: mongo:7.0
     ports:
-      - "27017:27017"
+      - ":27017"
     environment:
       - MONGO_INITDB_DATABASE=queries
       - MONGO_INITDB_ROOT_USERNAME=${SHARE_DB_USER}
