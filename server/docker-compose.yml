@@ -60,7 +60,6 @@ services:
       - MONGO_INITDB_ROOT_PASSWORD=${SHARE_DB_PASSWORD}
     volumes:
       - mongodb-data:/data/db
-    restart: unless-stopped
 
 volumes:
   offer_data:

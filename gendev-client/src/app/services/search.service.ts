@@ -4,12 +4,13 @@ import { Address } from '../models/address.model';
 import { NdjsonResponse } from '../models/response.model';
 import { FilterOptions } from '../models/filterOptions.model';
 import ndjsonStream from 'can-ndjson-stream';
+import { environment } from '../../environments/environment';
 
 @Injectable({
   providedIn: 'root',
 })
 export class SearchService {
-  private readonly apiUrl = 'http://localhost:3030';
+  private readonly apiUrl = environment.apiUrl;
 
   constructor() {}
 
