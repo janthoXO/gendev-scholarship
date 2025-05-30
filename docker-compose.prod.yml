@@ -55,6 +55,7 @@ services:
       - offer-cache
       - user-offer-cache
       - share-db
+    restart: unless-stopped
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.server.rule=Host(`${DOMAIN}`) && PathPrefix(`/api`)"
@@ -73,6 +74,7 @@ services:
       - offer_data:/data
     environment:
       - REDIS_PASSWORD=${OFFER_CACHE_PASSWORD}
+    restart: unless-stopped
 
   user-offer-cache:
     image: redis:8.0.1
@@ -83,6 +85,7 @@ services:
       - user_offer_data:/data
     environment:
       - REDIS_PASSWORD=${USER_OFFER_CACHE_PASSWORD}
+    restart: unless-stopped
 
   share-db:
     image: mongo:7.0
@@ -94,6 +97,7 @@ services:
       - MONGO_INITDB_ROOT_PASSWORD=${SHARE_DB_PASSWORD}
     volumes:
       - mongodb-data:/data/db
+    restart: unless-stopped
 
   client:
     image: ghcr.io/janthoxo/gendev-scholarship/client:latest
@@ -103,6 +107,7 @@ services:
       - server
     environment:
       - API_URL=${DOMAIN}/api
+    restart: unless-stopped
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.client.rule=Host(`${DOMAIN}`)"
