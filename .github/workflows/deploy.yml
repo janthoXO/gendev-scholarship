@@ -1,0 +1,58 @@
+name: deploy docker images
+
+on:
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment:
+      name: AZURE
+      url: 'https://${{ vars.PUBLIC_IP }}.nip.io' 
+    steps:      
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Copy Docker Compose File From Repo to VM Host
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ vars.PUBLIC_IP }}
+          username: ${{ vars.AZURE_USER }}
+          key: ${{ secrets.AZURE_PRIVATE_KEY }}
+          source: "./docker-compose.prod.yml"
+          target: /home/${{ vars.AZURE_USER }}
+
+      - name: SSH to VM and Create .env.prod
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ vars.PUBLIC_IP }}
+          username: ${{ vars.AZURE_USER }}
+          key: ${{ secrets.AZURE_PRIVATE_KEY }}
+          script: |
+            rm .env.prod
+            touch .env.prod
+            echo "DOMAIN=${{ vars.PUBLIC_IP }}.nip.io" >> .env.prod
+            echo "SHARE_DB_USER=${{ secrets.SHARE_DB_USER }}" >> .env.prod
+            echo "SHARE_DB_PASSWORD=${{ secrets.SHARE_DB_PASSWORD }}" >> .env.prod
+            echo "OFFER_CACHE_PASSWORD=${{ secrets.OFFER_CACHE_PASSWORD }}" >> .env.prod
+            echo "USER_OFFER_CACHE_PASSWORD=${{ secrets.USER_OFFER_CACHE_PASSWORD }}" >> .env.prod
+            echo "API_TIMEOUT=${{ vars.API_TIMEOUT }}" >> .env.prod
+            echo "VERBYNDICH_API_KEY=${{ secrets.VERBYNDICH_API_KEY }}" >> .env.prod
+            echo "SERVUSSPEED_USERNAME=${{ secrets.SERVUSSPEED_USERNAME }}" >> .env.prod
+            echo "SERVUSSPEED_PASSWORD=${{ secrets.SERVUSSPEED_PASSWORD }}" >> .env.prod
+            echo "PINGPERFECT_SIGNATURE_SECRET=${{ secrets.PINGPERFECT_SIGNATURE_SECRET }}" >> .env.prod
+            echo "PINGPERFECT_CLIENT_ID=${{ secrets.PINGPERFECT_CLIENT_ID }}" >> .env.prod
+            echo "WEBWUNDER_API_KEY=${{ secrets.WEBWUNDER_API_KEY }}" >> .env.prod
+            echo "BYTEME_API_KEY=${{ secrets.BYTEME_API_KEY }}" >> .env.prod
+
+      - name: SSH to VM and Execute Docker-Compose Up
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ vars.PUBLIC_IP }}
+          username: ${{ vars.AZURE_USER }}
+          key: ${{ secrets.AZURE_PRIVATE_KEY }}
+          script: |
+            echo "Logging into Docker registry..."
+            echo ${{ secrets.GITHUB_TOKEN }} | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+            echo "Starting Docker Compose..."
+            docker compose -f docker-compose.prod.yml --env-file=.env.prod up --pull=always -d

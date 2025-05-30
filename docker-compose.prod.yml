@@ -1,0 +1,120 @@
+# Full-stack Docker Compose for GenDev Scholarship Application
+# This includes both server and client docker-compose configurations
+
+include:
+  - server/docker-compose.yml
+
+services:
+  reverse-proxy:
+    image: traefik:v3.4
+    command:
+      - "--providers.docker=true"
+      - "--providers.docker.exposedByDefault=false"
+      - "--entrypoints.web.address=:80"
+      - "--entrypoints.websecure.address=:443"
+      - "--entrypoints.web.http.redirections.entryPoint.to=websecure"
+      - "--entrypoints.web.http.redirections.entryPoint.scheme=https"
+      - "--certificatesresolvers.letsencrypt.acme.httpchallenge=true"
+      - "--certificatesresolvers.letsencrypt.acme.httpchallenge.entrypoint=web"
+      - "--certificatesresolvers.letsencrypt.acme.email=test@test.de"
+      - "--certificatesresolvers.letsencrypt.acme.storage=/letsencrypt/acme.json"
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - ./letsencrypt:/letsencrypt
+
+  server:
+    image: ghcr.io/janthoxo/gendev-scholarship:latest
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "3030:3030"
+    environment:
+      - SHARE_DB_URL=mongodb://share-db:27017
+      - SHARE_DB_NAME=queries
+      - SHARE_DB_USER=${SHARE_DB_USER}
+      - SHARE_DB_PASSWORD=${SHARE_DB_PASSWORD}
+      - OFFER_CACHE_URL=offer-cache:6379
+      - OFFER_CACHE_PASSWORD=${OFFER_CACHE_PASSWORD}
+      - USER_OFFER_CACHE_URL=offer-cache:6379
+      - USER_OFFER_CACHE_PASSWORD=${USER_OFFER_CACHE_PASSWORD}
+      - SERVER_PORT=3030
+      - API_TIMEOUT=${API_TIMEOUT:-60}
+      - VERBYNDICH_API_KEY=${VERBYNDICH_API_KEY}
+      - SERVUSSPEED_USERNAME=${SERVUSSPEED_USERNAME}
+      - SERVUSSPEED_PASSWORD=${SERVUSSPEED_PASSWORD}
+      - PINGPERFECT_SIGNATURE_SECRET=${PINGPERFECT_SIGNATURE_SECRET}
+      - PINGPERFECT_CLIENT_ID=${PINGPERFECT_CLIENT_ID}
+      - WEBWUNDER_API_KEY=${WEBWUNDER_API_KEY}
+      - BYTEME_API_KEY=${BYTEME_API_KEY}
+    depends_on:
+      - offer-cache
+      - user-offer-cache
+      - share-db
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.server.rule=Host(`${DOMAIN}`) && PathPrefix(`/api`)"
+      - "traefik.http.services.server.loadbalancer.server.port=3030"
+      - "traefik.http.routers.server.entrypoints=websecure"
+      - "traefik.http.routers.server.tls.certresolver=letsencrypt"
+      - "traefik.http.middlewares.strip-api.stripprefix.prefixes=/api"
+      - "traefik.http.routers.server.middlewares=strip-api"
+
+  offer-cache:
+    image: redis:8.0.1
+    command: redis-server --requirepass ${OFFER_CACHE_PASSWORD}
+    ports:
+      - "6379:6379"
+    volumes:
+      - offer_data:/data
+    environment:
+      - REDIS_PASSWORD=${OFFER_CACHE_PASSWORD}
+
+  user-offer-cache:
+    image: redis:8.0.1
+    command: redis-server --requirepass ${USER_OFFER_CACHE_PASSWORD}
+    ports:
+      - "6380:6379"
+    volumes:
+      - user_offer_data:/data
+    environment:
+      - REDIS_PASSWORD=${USER_OFFER_CACHE_PASSWORD}
+
+  share-db:
+    image: mongo:7.0
+    ports:
+      - "27017:27017"
+    environment:
+      - MONGO_INITDB_DATABASE=queries
+      - MONGO_INITDB_ROOT_USERNAME=${SHARE_DB_USER}
+      - MONGO_INITDB_ROOT_PASSWORD=${SHARE_DB_PASSWORD}
+    volumes:
+      - mongodb-data:/data/db
+
+  client:
+    image: ghcr.io/janthoxo/gendev-scholarship/client:latest
+    ports:
+      - "4200:80"
+    depends_on:
+      - server
+    environment:
+      - API_URL=${DOMAIN}/api
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.client.rule=Host(`${DOMAIN}`)"
+      - "traefik.http.services.client.loadbalancer.server.port=80"
+      - "traefik.http.routers.client.entrypoints=websecure"
+      - "traefik.http.routers.client.tls.certresolver=letsencrypt"
+      - "traefik.http.middlewares.client-compress.compress=true"
+      - "traefik.http.routers.client.middlewares=client-compress"
+
+volumes:
+  offer_data:
+    driver: local
+  user_offer_data:
+    driver: local
+  mongodb-data:

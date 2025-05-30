@@ -1,0 +1,12 @@
+name: docker build and push
+on:
+  release:
+    types:
+      - released
+
+jobs:
+  server-build:
+    uses: ./.github/workflows/server-build.yml
+
+  client-build:
+    uses: ./.github/workflows/client-build.yml
