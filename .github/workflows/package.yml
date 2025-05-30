@@ -6,7 +6,7 @@ on:
 
 jobs:
   server-build:
-    uses: ./.github/workflows/server-build.yml
+    uses: ./.github/workflows/server-package.yml
 
   client-build:
-    uses: ./.github/workflows/client-build.yml
+    uses: ./.github/workflows/client-package.yml
