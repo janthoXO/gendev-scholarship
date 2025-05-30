@@ -1,5 +1,5 @@
 name: server build
-on: 
+on:
   workflow_call:
 
 jobs:
@@ -15,8 +15,10 @@ jobs:
       - name: Set up Go
         uses: actions/setup-go@v5
         with:
-          go-version: '1.24'
+          go-version: "1.24"
           check-latest: true
+          cache: true
+          cache-dependency-path: "./server/go.sum"
 
       - name: Download dependencies
         run: go mod download

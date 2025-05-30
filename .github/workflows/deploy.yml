@@ -8,8 +8,8 @@ jobs:
     runs-on: ubuntu-latest
     environment:
       name: AZURE
-      url: 'https://${{ vars.PUBLIC_IP }}.nip.io' 
-    steps:      
+      url: "https://${{ vars.PUBLIC_IP }}.nip.io"
+    steps:
       - name: Checkout Code
         uses: actions/checkout@v4
 
