@@ -19,6 +19,9 @@ func main() {
 	db.InitOfferCache()
 	db.InitUserOfferCache()
 
+	// Initialize share database
+	db.InitShareDb()
+
 	log.Infof("Starting GenDev server on port %d", cfg.Server.Port)
 	gin.SetMode(gin.ReleaseMode)
 

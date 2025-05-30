@@ -2,6 +2,8 @@ package controller
 
 import (
 	"context"
+	"crypto/sha256"
+	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -20,12 +22,32 @@ func SetupRouter() *gin.Engine {
 	r := gin.New()
 	r.Use(gin.ErrorLogger())
 	r.Use(gin.Recovery())
+	r.Use(corsMiddleware())
 
 	r.GET("/offers", FetchOffersByAddress)
-	r.GET("/offers/:queryHash/shared", FetchSharedOffers)
-	r.POST("/offers/:queryHash/shared", ShareOffer)
+	r.GET("/offers/shared/:shareId", FetchSharedOffers)
+	r.POST("/offers/shared/:queryHash", ShareOffer)
 
 	return r
+}
+
+// corsMiddleware sets up CORS headers for all routes
+func corsMiddleware() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		c.Header("Access-Control-Allow-Origin", "*")
+		c.Header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
+		c.Header("Access-Control-Allow-Headers", "Origin, Content-Type, Content-Length, Accept-Encoding, X-CSRF-Token, Authorization")
+		c.Header("Access-Control-Expose-Headers", "Content-Length")
+		c.Header("Access-Control-Allow-Credentials", "true")
+
+		// Handle preflight requests
+		if c.Request.Method == "OPTIONS" {
+			c.AbortWithStatus(204)
+			return
+		}
+
+		c.Next()
+	}
 }
 
 var offerService = service.OfferServiceImpl{}
@@ -50,7 +72,7 @@ type FilterOptionParams struct {
 type OfferFilter func(domain.Offer) bool
 
 func (filter FilterOptionParams) standardFilter(offer domain.Offer) bool {
-	if filter.Provider != nil && offer.Provider != *filter.Provider {
+	if filter.Provider != nil && *filter.Provider != "" && offer.Provider != *filter.Provider {
 		return false
 	}
 	if filter.Installation != nil && offer.InstallationService != *filter.Installation {
@@ -65,15 +87,41 @@ func (filter FilterOptionParams) standardFilter(offer domain.Offer) bool {
 	if filter.CostMax != nil && offer.MonthlyCostInCent > *filter.CostMax {
 		return false
 	}
-	if filter.ConnectionType != nil && offer.ConnectionType != *filter.ConnectionType {
+	if filter.ConnectionType != nil && *filter.ConnectionType != "" && offer.ConnectionType != *filter.ConnectionType {
 		return false
 	}
 	return true
 }
 
 func (filter FilterOptionParams) isEmpty() bool {
-	return filter.Provider == nil && filter.Installation == nil && filter.SpeedMin == nil &&
-		filter.Age == nil && filter.CostMax == nil && filter.ConnectionType == nil
+	return (filter.Provider == nil || *filter.Provider == "") && filter.Installation == nil && filter.SpeedMin == nil &&
+		filter.Age == nil && filter.CostMax == nil && (filter.ConnectionType == nil || *filter.ConnectionType == "")
+}
+
+func (filter FilterOptionParams) hash() string {
+	h := sha256.New()
+	agg := ""
+	if filter.Provider != nil {
+		agg += *filter.Provider
+	}
+	if filter.Installation != nil {
+		agg += fmt.Sprintf("%t", *filter.Installation)
+	}
+	if filter.SpeedMin != nil {
+		agg += fmt.Sprintf("%d", *filter.SpeedMin)
+	}
+	if filter.Age != nil {
+		agg += fmt.Sprintf("%d", *filter.Age)
+	}
+	if filter.CostMax != nil {
+		agg += fmt.Sprintf("%d", *filter.CostMax)
+	}
+	if filter.ConnectionType != nil {
+		agg += *filter.ConnectionType
+	}
+
+	h.Write([]byte(agg))
+	return base64.RawURLEncoding.EncodeToString(h.Sum(nil))
 }
 
 func FetchOffersByAddress(c *gin.Context) {
@@ -99,7 +147,6 @@ func FetchOffersByAddress(c *gin.Context) {
 	c.Header("Content-Type", "application/x-ndjson")
 	c.Header("Cache-Control", "no-cache")
 	c.Header("Connection", "close") // Will close when done
-	c.Header("Access-Control-Allow-Origin", "*")
 
 	// Parse address parameters from query
 	var params FetchOffersQueryParameters
@@ -140,14 +187,14 @@ func FetchOffersByAddress(c *gin.Context) {
 	// save session id to user query
 	userQuery.SessionID = params.SessionId
 
+	// Set status for successful response
+	c.Status(http.StatusOK)
+
 	if queryJSON, err := json.Marshal(userQuery); err == nil {
 		// Write the query information to the response
 		fmt.Fprintf(c.Writer, "{\"query\": %s}\n", queryJSON)
 		flusher.Flush()
 	}
-
-	// Set status for successful response
-	c.Status(http.StatusOK)
 
 	ctx := c.Request.Context()
 	combinedOfferChannel := make(chan domain.Offer)
@@ -261,6 +308,13 @@ func ShareOffer(c *gin.Context) {
 		return
 	}
 
+	sessionId := c.Query("sessionId")
+	if sessionId == "" {
+		log.Warn("Session ID not specified")
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Missing session ID"})
+		return
+	}
+
 	// as we filter client side, but want to display the same offers in the share link, we need to filter the cached offers now before creating the snapshot
 	var filterParams FilterOptionParams
 	if err := c.ShouldBindQuery(&filterParams); err != nil {
@@ -269,21 +323,114 @@ func ShareOffer(c *gin.Context) {
 		return
 	}
 
-	query, err := db.UserOfferCacheInstance.GetCachedUserQuery(c.Request.Context(), queryHash)
+	query, err := db.UserOfferCacheInstance.GetCachedUserQuery(c.Request.Context(), queryHash+":"+sessionId)
 	if err != nil {
 		log.WithError(err).Error("Failed to retrieve cached query for sharing")
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to retrieve cached query"})
 		return
 	}
 
-	// TODO save query in database for sharing
+	// filter offers based on the provided filter parameters
+	isFilterEmpty := filterParams.isEmpty()
+	filteredOffers := make(map[string]domain.Offer)
 
-	c.JSON(http.StatusOK, gin.H{"link": fmt.Sprintf("offers/%s/shared?street=%s&houseNumber=%s&city=%s&plz=%s", queryHash, query.Address.Street, query.Address.HouseNumber, query.Address.City, query.Address.ZipCode)})
+	// create shareId by hashing of offer hashes, filterParams and queryHash
+	shareId := queryHash + filterParams.hash() + sessionId
+	for _, offer := range query.Offers {
+		if isFilterEmpty || filterParams.standardFilter(offer) {
+			filteredOffers[offer.HelperOfferHash] = offer
+			shareId += offer.HelperOfferHash
+		}
+	}
+	query.Offers = filteredOffers
+
+	if len(query.Offers) == 0 {
+		log.Warn("Can not share empty query")
+		c.JSON(http.StatusNotFound, gin.H{"error": "Cannot share an empty query"})
+		return
+	}
+
+	h := sha256.New()
+	h.Write([]byte(shareId))
+	shareId = base64.RawURLEncoding.EncodeToString(h.Sum(nil))
+
+	exists, err := db.QueryExists(c.Request.Context(), shareId)
+	if err != nil {
+		return
+	}
+
+	if exists {
+		c.JSON(http.StatusOK, gin.H{"shareId": shareId})
+		log.Infof("Query already shared: %s", shareId)
+		return
+	}
+
+	queryEntity := db.QueryEntity{
+		ShareId: shareId,
+		Query:   *query,
+	}
+	// save query in database for sharing
+	shareId, err = db.SaveQuery(c.Request.Context(), queryEntity)
+	if err != nil {
+		log.WithError(err).Error("Failed to save query for sharing")
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to save query for sharing"})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"shareId": shareId})
+	log.Infof("Query shared successfully with ID: %s", shareId)
 }
 
 func FetchSharedOffers(c *gin.Context) {
+	shareId := c.Param("shareId")
+	if shareId == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Share ID is required"})
+		return
+	}
 
-	c.JSON(http.StatusNotImplemented, gin.H{"error": "Shared offers not implemented yet"})
+	flusher, ok := c.Writer.(http.Flusher)
+	if !ok {
+		log.Warn("Writer doesn't support flushing")
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Streaming not supported"})
+		return
+	}
+
+	// Set response headers for streaming
+	// Set headers for NDJSON
+	c.Header("Content-Type", "application/x-ndjson")
+	c.Header("Cache-Control", "no-cache")
+	c.Header("Connection", "close") // Will close when done
+
+	query, err := db.GetQueryById(c.Request.Context(), shareId)
+	if err != nil {
+		log.WithError(err).Error("Failed to retrieve shared query")
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to retrieve shared query"})
+		return
+	}
+
+	if query == nil {
+		log.Warnf("No query found for share ID %s", shareId)
+		c.JSON(http.StatusNotFound, gin.H{"error": "No query found for the provided share ID"})
+		return
+	}
+
+	// Set status for successful response
+	c.Status(http.StatusOK)
+
+	offers := query.Offers
+	query.Offers = nil
+	if queryJSON, err := json.Marshal(query); err == nil {
+		// Write the query information to the response
+		fmt.Fprintf(c.Writer, "{\"query\": %s}\n", queryJSON)
+		flusher.Flush()
+	}
+
+	for _, offer := range offers {
+		if offerJSON, err := json.Marshal(offer); err == nil {
+			fmt.Fprintf(c.Writer, "{\"offer\": %s}\n", offerJSON)
+			flusher.Flush()
+		}
+	}
 }
 
 func cacheOffers(ctx context.Context, query *domain.Query, offersChannel <-chan domain.Offer, cacheFunc func(ctx context.Context, query domain.Query) error, isUserCache bool) (<-chan domain.Offer, <-chan struct{}) {

@@ -7,11 +7,10 @@ services:
     ports:
       - "3030:3030"
     environment:
-      - DATABASE_HOST=${DATABASE_HOST}
-      - DATABASE_PORT=${DATABASE_PORT}
-      - DATABASE_NAME=${DATABASE_NAME}
-      - DATABASE_USER=${DATABASE_USER}
-      - DATABASE_PASSWORD=${DATABASE_PASSWORD}
+      - SHARE_DB_URL=${SHARE_DB_URL}
+      - SHARE_DB_NAME=${SHARE_DB_NAME}
+      - SHARE_DB_USER=${SHARE_DB_USER}
+      - SHARE_DB_PASSWORD=${SHARE_DB_PASSWORD}
       - OFFER_CACHE_URL=${OFFER_CACHE_URL}
       - OFFER_CACHE_PASSWORD=${OFFER_CACHE_PASSWORD}
       - USER_OFFER_CACHE_URL=${USER_OFFER_CACHE_URL}
@@ -29,6 +28,7 @@ services:
     depends_on:
       - offer-cache
       - user-offer-cache
+      - share-db
 
   offer-cache:
     image: redis:8.0.1
@@ -50,8 +50,21 @@ services:
     environment:
       - REDIS_PASSWORD=${USER_OFFER_CACHE_PASSWORD}
 
+  share-db:
+    image: mongo:7.0
+    ports:
+      - "27017:27017"
+    environment:
+      - MONGO_INITDB_DATABASE=${SHARE_DB_NAME}
+      - MONGO_INITDB_ROOT_USERNAME=${SHARE_DB_USER}
+      - MONGO_INITDB_ROOT_PASSWORD=${SHARE_DB_PASSWORD}
+    volumes:
+      - mongodb-data:/data/db
+    restart: unless-stopped
+
 volumes:
   offer_data:
     driver: local
   user_offer_data:
     driver: local
+  mongodb-data:

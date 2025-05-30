@@ -8,11 +8,10 @@ import (
 
 type Configuration struct {
 	Database struct {
-		Host     string `env:"DATABASE_HOST,notEmpty"`
-		Port     uint   `env:"DATABASE_PORT,notEmpty"`
-		Name     string `env:"DATABASE_NAME,notEmpty"`
-		User     string `env:"DATABASE_USER,notEmpty"`
-		Password string `env:"DATABASE_PASSWORD,notEmpty"`
+		Url     string `env:"SHARE_DB_URL,notEmpty"`
+		Name     string `env:"SHARE_DB_NAME,notEmpty"`
+		User     string `env:"SHARE_DB_USER,notEmpty"`
+		Password string `env:"SHARE_DB_PASSWORD,notEmpty"`
 	}
 	OfferCache struct {
 		Url      string `env:"OFFER_CACHE_URL,notEmpty"`
