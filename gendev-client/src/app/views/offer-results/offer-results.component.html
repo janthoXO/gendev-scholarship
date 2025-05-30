@@ -1,6 +1,8 @@
 <div class="container-fluid bg-light min-vh-100">
   <!-- Apple-inspired Fixed Header using Bootstrap -->
-  <div class="sticky-top bg-white bg-opacity-95 border-bottom shadow-sm backdrop-blur">
+  <div
+    class="sticky-top bg-white bg-opacity-95 border-bottom shadow-sm backdrop-blur"
+  >
     <div class="container-xxl">
       <!-- Main Search Section -->
       <div class="py-3">
@@ -8,7 +10,7 @@
           <div class="col-lg-8">
             <form (ngSubmit)="onSearchSubmit()" novalidate>
               <div class="d-flex gap-2 align-items-stretch flex-wrap">
-                <div class="flex-fill" style="min-width: 150px;">
+                <div class="flex-fill" style="min-width: 150px">
                   <input
                     type="text"
                     id="searchStreet"
@@ -19,7 +21,10 @@
                     required
                   />
                 </div>
-                <div class="flex-md-grow-0" style="flex: 0 0 80px; min-width: 70px;">
+                <div
+                  class="flex-md-grow-0"
+                  style="flex: 0 0 80px; min-width: 70px"
+                >
                   <input
                     type="text"
                     id="searchHouseNumber"
@@ -30,7 +35,7 @@
                     required
                   />
                 </div>
-                <div class="flex-fill" style="min-width: 120px;">
+                <div class="flex-fill" style="min-width: 120px">
                   <input
                     type="text"
                     id="searchCity"
@@ -41,7 +46,10 @@
                     required
                   />
                 </div>
-                <div class="flex-md-grow-0" style="flex: 0 0 80px; min-width: 70px;">
+                <div
+                  class="flex-md-grow-0"
+                  style="flex: 0 0 80px; min-width: 70px"
+                >
                   <input
                     type="text"
                     id="searchZipCode"
@@ -53,7 +61,10 @@
                     required
                   />
                 </div>
-                <div class="flex-md-grow-0" style="flex: 0 0 44px; min-width: 44px;">
+                <div
+                  class="flex-md-grow-0"
+                  style="flex: 0 0 44px; min-width: 44px"
+                >
                   <button
                     type="submit"
                     class="btn btn-primary w-100 h-100 rounded-3"
@@ -70,19 +81,25 @@
           <div class="col-lg-4 d-flex align-items-center justify-content-end">
             <div class="d-flex align-items-center gap-3">
               <!-- Share Button -->
+              @if (!isLoading()) {
               <button
                 class="btn btn-outline-primary rounded-pill"
                 (click)="shareQuery()"
                 title="Share this search"
+                [disabled]="isLoading() || !isShareable() || !state.query()"
               >
-                <fa-icon [icon]="faShareAlt" class="pe-1"></fa-icon>                 
+                <fa-icon [icon]="faShareAlt" class="pe-1"></fa-icon>
                 Share
               </button>
+              }
 
               <!-- Results Count -->
-              @if (state.isLoading()) {
+              @if (isLoading()) {
               <div class="d-flex align-items-center text-muted">
-                <div class="spinner-border spinner-border-sm me-2" role="status">
+                <div
+                  class="spinner-border spinner-border-sm me-2"
+                  role="status"
+                >
                   <span class="visually-hidden fs-6">Loading...</span>
                 </div>
                 <small>Searching...</small>
@@ -105,7 +122,7 @@
               class="form-select form-select-sm rounded-2 flex-shrink-0"
               [(ngModel)]="filter().provider"
               (ngModelChange)="updateFilter('provider', $event)"
-              style="width: auto; min-width: 140px;"
+              style="width: auto; min-width: 140px"
             >
               <option value="" selected>All Providers</option>
               @for (provider of availableProviders(); track provider) {
@@ -117,7 +134,7 @@
               class="form-select form-select-sm rounded-2 flex-shrink-0"
               [(ngModel)]="filter().connectionType"
               (ngModelChange)="updateFilter('connectionType', $event)"
-              style="width: auto; min-width: 140px;"
+              style="width: auto; min-width: 140px"
             >
               <option value="" selected>All Types</option>
               @for (type of availableConnectionTypes(); track type) {
@@ -128,7 +145,7 @@
             <input
               type="number"
               class="form-control form-control-sm rounded-2 flex-shrink-0"
-              style="width: 140px;"
+              style="width: 140px"
               [(ngModel)]="filter().speedMin"
               (ngModelChange)="updateFilter('speedMin', $event)"
               placeholder="Min Speed (Mbps)"
@@ -138,7 +155,7 @@
             <input
               type="number"
               class="form-control form-control-sm rounded-2 flex-shrink-0"
-              style="width: 140px;"
+              style="width: 140px"
               [(ngModel)]="filter().costMax"
               (ngModelChange)="updateFilter('costMax', $event)"
               placeholder="Max Cost (€)"
@@ -154,7 +171,10 @@
                 [(ngModel)]="filter().installation"
                 (ngModelChange)="updateFilter('installation', $event)"
               />
-              <label class="form-check-label fw-medium" for="requireInstallation">
+              <label
+                class="form-check-label fw-medium"
+                for="requireInstallation"
+              >
                 Installation
               </label>
             </div>
@@ -164,18 +184,20 @@
           @if (activeFilters().length > 0) {
           <div class="d-flex align-items-center gap-2 flex-wrap mt-3">
             @for (filter of activeFilters(); track filter.type) {
-            <span class="badge bg-primary bg-opacity-10 text-primary border border-primary rounded-pill d-flex align-items-center gap-1 p-2">
+            <span
+              class="badge bg-primary bg-opacity-10 text-primary border border-primary rounded-pill d-flex align-items-center gap-1 p-2"
+            >
               <small class="fw-medium">{{ filter.label }}</small>
               <button
                 type="button"
                 class="btn-close"
-                style="font-size: 0.6rem;"
+                style="font-size: 0.6rem"
                 (click)="removeFilter(filter.type)"
                 aria-label="Remove filter"
               ></button>
             </span>
             }
-            <button 
+            <button
               class="btn btn-sm btn-outline-danger rounded-pill"
               (click)="clearFilters()"
             >
@@ -191,7 +213,7 @@
 
   <div class="container pt-4">
     <!-- Loading State -->
-    @if (state.isLoading() && filteredOffers().length === 0) {
+    @if (isLoading() && filteredOffers().length === 0) {
     <div class="text-center py-5">
       <div class="d-flex justify-content-center mb-4">
         <div
@@ -210,7 +232,7 @@
     }
 
     <!-- Error State -->
-    @if (state.error(); as error) {
+    @if (error(); as error) {
     <div class="alert alert-danger border-0 shadow-sm text-center" role="alert">
       <div class="mb-3">
         <fa-icon [icon]="faExclamationTriangle" class="text-danger"></fa-icon>
@@ -235,7 +257,7 @@
       </div>
       }
     </div>
-    } @else if (!state.isLoading() && !state.error()) {
+    } @else if (!isLoading() && !error()) {
     <div class="text-center py-5">
       <div class="mb-4">
         <i class="fas fa-search fa-3x text-muted"></i>
@@ -251,4 +273,12 @@
     </div>
     }
   </div>
+
+  <!-- Share Dialog Component -->
+  <app-share-dialog
+    [show]="showShareDialog()"
+    [queryHash]="state.query()?.addressHash || ''"
+    [filters]="filter()"
+    (close)="closeShareDialog()"
+  ></app-share-dialog>
 </div>

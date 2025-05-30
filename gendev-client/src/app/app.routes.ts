@@ -10,7 +10,7 @@ export const routes: Routes = [
     loadComponent: () => import('./views/offer-search/offer-search.component').then(m => m.OfferSearchComponent)
   },
   {
-    path: 'offers/shared/:uuid',
+    path: 'offers/shared/:shareId',
     loadComponent: () => import('./views/offer-shared/offer-shared.component').then(m => m.OfferSharedComponent)
   },
   {

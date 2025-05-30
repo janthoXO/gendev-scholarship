@@ -1,4 +1,4 @@
-import { Component, computed, OnInit, OnDestroy } from '@angular/core';
+import { Component, computed, OnInit, OnDestroy, signal } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { Address } from '../../models/address.model';
@@ -18,6 +18,9 @@ import { OfferResultsComponent } from '../offer-results/offer-results.component'
 })
 export class OfferSearchComponent implements OnInit, OnDestroy {
   private searchApiSubscription?: Subscription;
+
+  isLoading = signal<boolean>(false);
+  error = signal<string | null>(null);
 
   constructor(
     private route: ActivatedRoute,
@@ -64,9 +67,9 @@ export class OfferSearchComponent implements OnInit, OnDestroy {
       return;
     }
 
-    this.searchApiSubscription?.unsubscribe()
+    this.searchApiSubscription?.unsubscribe();
     this.state.resetState();
-    this.state.setLoading(true);
+    this.isLoading.set(true);
 
     this.searchApiSubscription = this.searchService
       .searchOffers(address, sessionId)
@@ -75,12 +78,12 @@ export class OfferSearchComponent implements OnInit, OnDestroy {
           this.state.handleNdjsonResponse(response);
         },
         error: (error) => {
-          console.error('Search error:', error);
-          this.state.setError('Failed to fetch offers. Please try again.');
-          this.state.setLoading(false);
+          console.error('Search offers error:', error);
+          this.error.set('Failed to fetch offers. Please try again.');
+          this.isLoading.set(false);
         },
         complete: () => {
-          this.state.setLoading(false);
+          this.isLoading.set(false);
         },
       });
   }

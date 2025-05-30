@@ -18,3 +18,37 @@
   transform: translateY(-1px);
   transition: transform 0.2s ease;
 }
+
+/* Apple-inspired Share Dialog Styles */
+.modal-content {
+  border: 1px solid rgba(0, 0, 0, 0.1) !important;
+}
+
+.modal-content .btn-primary {
+  font-weight: 500;
+  letter-spacing: -0.01em;
+}
+
+.modal-content .btn-primary:hover:not(:disabled) {
+  background: linear-gradient(135deg, #0056CC, #4A4AE8) !important;
+  transform: translateY(-1px);
+}
+
+.modal-content .btn-primary:disabled {
+  background: #34C759 !important;
+  border-color: #34C759 !important;
+  transform: none;
+}
+
+.modal-content .input-group .form-control {
+  border-right: none !important;
+}
+
+.modal-content .input-group .btn {
+  border-left: none !important;
+}
+
+/* Smooth transitions for copy button state */
+.modal-content .btn-primary {
+  transition: all 0.2s ease;
+}

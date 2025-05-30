@@ -1,0 +1,84 @@
+<!-- Apple-inspired Share Dialog Modal -->
+@if (show()) {
+<div class="apple-modal-backdrop" (click)="closeDialog()">
+  <div class="apple-modal-dialog" (click)="$event.stopPropagation()">
+    <!-- Header -->
+    <div class="apple-modal-header">
+      <h5 class="apple-modal-title">Share Search Results</h5>
+      <button
+        type="button"
+        class="apple-close-btn"
+        (click)="closeDialog()"
+        aria-label="Close"
+      >
+        <fa-icon [icon]="faClose"></fa-icon>
+      </button>
+    </div>
+
+    <!-- Body -->
+    <div class="apple-modal-body">
+      @if (isGeneratingLink()) {
+      <!-- Loading State -->
+      <div class="text-center py-4">
+        <fa-icon [icon]="faSpinner" class="fa-spin text-primary fs-3 mb-3"></fa-icon>
+        <p class="text-muted mb-0">Generating share link...</p>
+      </div>
+      } @else if (error()) {
+      <!-- Error State -->
+      <div class="alert alert-danger d-flex align-items-center" role="alert">
+        <fa-icon [icon]="faExclamationTriangle" class="me-2"></fa-icon>
+        <div class="flex-grow-1">{{ error() }}</div>
+        <button
+          type="button"
+          class="btn btn-sm btn-outline-danger ms-2"
+          (click)="retryGeneration()"
+        >
+          Retry
+        </button>
+      </div>
+      } @else if (shareLink()) {
+      <!-- Success State -->
+      <p class="text-muted mb-3">
+        Share this link to let others view your search results with the same filters:
+      </p>
+      
+      <div class="apple-link-container">
+        <input
+          type="text"
+          class="apple-link-input"
+          [value]="shareLink()"
+          readonly
+          #linkInput
+        />
+        <button
+          type="button"
+          class="apple-copy-btn"
+          (click)="copyShareLink()"
+          title="Copy to clipboard"
+        >
+          <fa-icon [icon]="faCopy"></fa-icon>
+        </button>
+      </div>
+
+      @if (linkCopied()) {
+      <div class="apple-success-message">
+        <fa-icon [icon]="faCheck" class="me-1"></fa-icon>
+        Link copied to clipboard!
+      </div>
+      }
+      }
+    </div>
+
+    <!-- Footer -->
+    <div class="apple-modal-footer">
+      <button
+        type="button"
+        class="btn btn-secondary"
+        (click)="closeDialog()"
+      >
+        Close
+      </button>
+    </div>
+  </div>
+</div>
+}

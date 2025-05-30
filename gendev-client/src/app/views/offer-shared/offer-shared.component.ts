@@ -1,9 +1,11 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnDestroy, OnInit, signal } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { State } from '../../services/state';
 import { SearchService } from '../../services/search.service';
 import { OfferResultsComponent } from '../offer-results/offer-results.component';
+import { Subscription } from 'rxjs';
+import { NdjsonResponse } from '../../models/response.model';
 
 @Component({
   selector: 'app-offer-shared',
@@ -12,7 +14,12 @@ import { OfferResultsComponent } from '../offer-results/offer-results.component'
   styleUrl: './offer-shared.component.css',
   standalone: true,
 })
-export class OfferSharedComponent implements OnInit {
+export class OfferSharedComponent implements OnInit, OnDestroy {
+  private shareApiSubscription?: Subscription;
+
+  isLoading = signal<boolean>(false);
+  error = signal<string | null>(null);
+
   constructor(
     private route: ActivatedRoute,
     private router: Router,
@@ -23,8 +30,8 @@ export class OfferSharedComponent implements OnInit {
   ngOnInit() {
     // Subscribe to route parameter changes (for shared routes)
     this.route.params.subscribe((params) => {
-      if (params['uuid']) {
-        this.loadSharedOffers(params['uuid']);
+      if (params['shareId']) {
+        this.loadSharedOffers(params['shareId']);
       } else {
         // If no address and no shared UUID, redirect to home
         console.error('No shared UUID provided, redirecting to home');
@@ -33,18 +40,31 @@ export class OfferSharedComponent implements OnInit {
     });
   }
 
-  loadSharedOffers(uuid: string) {
-    if (!uuid) return;
+  ngOnDestroy() {
+    // Clean up subscription to avoid memory leaks
+    this.shareApiSubscription?.unsubscribe();
+  }
+
+  loadSharedOffers(shareId: string) {
+    if (!shareId) return;
 
     this.state.resetState();
-    this.state.setLoading(true);
+    this.isLoading.set(true);
 
-    // TODO: Implement API call to fetch shared offers by UUID
-    // Example: this.searchService.getSharedOffers(this.sharedUuid)
-    console.log('Loading shared offers for UUID:', uuid);
-
-    // For now, just set loading to false
-    // You'll need to implement this method in your SearchService
-    this.state.setLoading(false);
+    this.shareApiSubscription = this.searchService
+      .getSharedOffers(shareId)
+      .subscribe({
+        next: (response: NdjsonResponse) => {
+          this.state.handleNdjsonResponse(response);
+        },
+        error: (error) => {
+          console.error('Shared offers error:', error);
+          this.error.set('Failed to fetch shared offers. Please try again.');
+          this.isLoading.set(false);
+        },
+        complete: () => {
+          this.isLoading.set(false);
+        },
+      });
   }
 }

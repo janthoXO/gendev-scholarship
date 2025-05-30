@@ -15,7 +15,7 @@ export class SearchService {
 
   searchOffers(
     address: Address,
-    sessionId: string,
+    sessionId: string
   ): Observable<NdjsonResponse> {
     const params = new URLSearchParams({
       street: address.street,
@@ -66,15 +66,51 @@ export class SearchService {
     sessionId: string,
     filters?: FilterOptions
   ): Observable<string> {
+    const params = new URLSearchParams({
+      sessionId: sessionId,
+    });
+    const url = `${
+      this.apiUrl
+    }/offers/shared/${queryHash}?${params.toString()}`;
+
+    // Prepare the request body
+    const requestBody = JSON.stringify(filters || {});
 
     return new Observable<string>((observer) => {
+      fetch(url, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: requestBody,
+      })
+        .then((response) => {
+          if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+          }
+
+          return response.json();
+        })
+        .then((data) => {
+          if (data && data.shareId) {
+            observer.next(data.shareId);
+            observer.complete();
+          } else {
+            throw new Error('Response does not contain a link field');
+          }
+        })
+        .catch((error) => {
+          console.error('Share request failed:', error);
+          observer.error(error);
+        });
+
+      // Cleanup function
+      return () => {};
     });
   }
 
-  getSharedOffers(
-    sharedId: string,
-  ): Observable<NdjsonResponse> {
-    const url = `${this.apiUrl}/offers/shared/?${sharedId}`;
+  getSharedOffers(sharedId: string): Observable<NdjsonResponse> {
+    const url = `${this.apiUrl}/offers/shared/${sharedId}`;
 
     return new Observable<NdjsonResponse>((observer) => {
       fetch(url, {})

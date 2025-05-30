@@ -1,9 +1,4 @@
-import {
-  Component,
-  computed,
-  signal,
-  effect,
-} from '@angular/core';
+import { Component, computed, signal, effect, input } from '@angular/core';
 import { Router } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -11,6 +6,7 @@ import { Address, isAddressEmpty } from '../../models/address.model';
 import { State } from '../../services/state';
 import { SearchService } from '../../services/search.service';
 import { OfferCardComponent } from '../../components/offer-card/offer-card.component';
+import { ShareDialogComponent } from '../../components/share-dialog/share-dialog.component';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import {
   faSearch,
@@ -27,7 +23,13 @@ import {
 
 @Component({
   selector: 'app-offer-results',
-  imports: [CommonModule, FormsModule, FontAwesomeModule, OfferCardComponent],
+  imports: [
+    CommonModule,
+    FormsModule,
+    FontAwesomeModule,
+    OfferCardComponent,
+    ShareDialogComponent,
+  ],
   templateUrl: './offer-results.component.html',
   styleUrl: './offer-results.component.css',
   standalone: true,
@@ -38,6 +40,9 @@ export class OfferResultsComponent {
   protected faClose = faClose;
   protected faRedo = faRedo;
   protected faExclamationTriangle = faExclamationTriangle;
+
+  // Share dialog state
+  showShareDialog = signal(false);
 
   private offers = computed(() => {
     const offersMap = this.state.query()?.offers;
@@ -58,6 +63,10 @@ export class OfferResultsComponent {
     city: '',
     zipCode: '',
   });
+
+  error = input<string | null>(null);
+  isLoading = input<boolean>(false);
+  isShareable = input<boolean>(false);
 
   // Computed values for filter options
   availableProviders = computed(() => {
@@ -142,8 +151,6 @@ export class OfferResultsComponent {
   ) {
     effect(() => {
       const query = this.state.query();
-      console.log(query)
-      console.log(this.addressSearch())
       if (isAddressEmpty(this.addressSearch()) && query?.address) {
         this.addressSearch.set({
           street: query.address.street,
@@ -172,21 +179,6 @@ export class OfferResultsComponent {
     });
 
     this.state.resetState();
-  }
-
-  loadSharedOffers(uuid: string) {
-    if (!uuid) return;
-
-    this.state.setLoading(true);
-    this.state.setError(null);
-
-    // TODO: Implement API call to fetch shared offers by UUID
-    // Example: this.searchService.getSharedOffers(this.sharedUuid)
-    console.log('Loading shared offers for UUID:', uuid);
-
-    // For now, just set loading to false
-    // You'll need to implement this method in your SearchService
-    this.state.setLoading(false);
   }
 
   retrySearch() {
@@ -300,14 +292,15 @@ export class OfferResultsComponent {
     this.resetComponent();
 
     // Navigate to search with the new address
-    this.router.navigate(['/offers'], {
-      queryParams: {
-        street: newAddress.street,
-        houseNumber: newAddress.houseNumber,
-        city: newAddress.city,
-        zipCode: newAddress.zipCode,
-      },
-
+    this.router.navigate(['/'], { skipLocationChange: true }).then(() => {
+      this.router.navigate(['/offers'], {
+        queryParams: {
+          street: newAddress.street,
+          houseNumber: newAddress.houseNumber,
+          city: newAddress.city,
+          zipCode: newAddress.zipCode,
+        },
+      });
     });
   }
 
@@ -318,20 +311,10 @@ export class OfferResultsComponent {
       return;
     }
 
-    // TODO: Implement share functionality
-    // This should call an API to create a share link
-    console.log('Sharing query:', currentQuery);
+    this.showShareDialog.set(true);
+  }
 
-    // For now, just copy the current URL to clipboard
-    const currentUrl = window.location.href;
-    navigator.clipboard
-      .writeText(currentUrl)
-      .then(() => {
-        console.log('URL copied to clipboard');
-        // You could show a toast notification here
-      })
-      .catch((err) => {
-        console.error('Failed to copy URL:', err);
-      });
+  closeShareDialog() {
+    this.showShareDialog.set(false);
   }
 }
