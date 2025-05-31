@@ -1,107 +1,122 @@
-<wsdl:definitions xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/" xmlns:sch="http://webwunder.gendev7.check24.fun/offerservice" xmlns:soap="http://schemas.xmlsoap.org/wsdl/soap/" xmlns:tns="http://spring.io/guides/gs-producing-web-service" targetNamespace="http://spring.io/guides/gs-producing-web-service">
-<wsdl:types>
-<xs:schema xmlns:tns="http://webwunder.gendev7.check24.fun/offerservice" xmlns:xs="http://www.w3.org/2001/XMLSchema" elementFormDefault="qualified" targetNamespace="http://webwunder.gendev7.check24.fun/offerservice">
-<!--  Supported Country  -->
-<xs:simpleType name="supportedCountry">
-<xs:restriction base="xs:string">
-<xs:enumeration value="DE"/>
-<xs:enumeration value="AT"/>
-<xs:enumeration value="CH"/>
-</xs:restriction>
-</xs:simpleType>
-<!--  Address Type  -->
-<xs:complexType name="address">
-<xs:sequence>
-<xs:element name="street" type="xs:string"/>
-<xs:element name="houseNumber" type="xs:string"/>
-<xs:element name="city" type="xs:string"/>
-<xs:element name="plz" type="xs:string"/>
-<xs:element name="countryCode" type="tns:supportedCountry"/>
-</xs:sequence>
-</xs:complexType>
-<!--  Input Type  -->
-<xs:element name="input" type="tns:input"/>
-<xs:complexType name="input">
-<xs:sequence>
-<xs:element name="installation" type="xs:boolean"/>
-<xs:element name="connectionEnum" type="tns:connectionType"/>
-<xs:element name="address" type="tns:address"/>
-</xs:sequence>
-</xs:complexType>
-<!--  Voucher Type Hierarchy  -->
-<xs:complexType abstract="true" name="voucher"/>
-<xs:complexType name="percentageVoucher">
-<xs:complexContent>
-<xs:extension base="tns:voucher">
-<xs:sequence>
-<xs:element name="percentage" type="xs:int"/>
-<xs:element name="maxDiscountInCent" type="xs:int"/>
-</xs:sequence>
-</xs:extension>
-</xs:complexContent>
-</xs:complexType>
-<xs:complexType name="absoluteVoucher">
-<xs:complexContent>
-<xs:extension base="tns:voucher">
-<xs:sequence>
-<xs:element name="discountInCent" type="xs:int"/>
-<xs:element name="minOrderValueInCent" type="xs:int"/>
-</xs:sequence>
-</xs:extension>
-</xs:complexContent>
-</xs:complexType>
-<!--  Connection Type  -->
-<xs:simpleType name="connectionType">
-<xs:restriction base="xs:string">
-<xs:enumeration value="DSL"/>
-<xs:enumeration value="CABLE"/>
-<xs:enumeration value="FIBER"/>
-<xs:enumeration value="MOBILE"/>
-</xs:restriction>
-</xs:simpleType>
-<!--  Product Info  -->
-<xs:complexType name="productInfo">
-<xs:sequence>
-<xs:element name="speed" type="xs:int"/>
-<xs:element name="monthlyCostInCent" type="xs:int"/>
-<xs:element name="monthlyCostInCentFrom25thMonth" type="xs:int"/>
-<xs:element minOccurs="0" name="voucher" type="tns:voucher"/>
-<xs:element name="contractDurationInMonths" type="xs:int"/>
-<xs:element name="connectionType" type="tns:connectionType"/>
-</xs:sequence>
-</xs:complexType>
-<!--  Product  -->
-<xs:complexType name="product">
-<xs:sequence>
-<xs:element name="productId" type="xs:int"/>
-<xs:element name="providerName" type="xs:string"/>
-<xs:element minOccurs="0" name="productInfo" type="tns:productInfo"/>
-</xs:sequence>
-</xs:complexType>
-<xs:element name="product" type="tns:product"/>
-<!--  Output  -->
-<xs:complexType name="output">
-<xs:sequence>
-<xs:element maxOccurs="unbounded" name="products" type="tns:product"/>
-</xs:sequence>
-</xs:complexType>
-<xs:element name="output" type="tns:output"/>
-<xs:element name="legacyGetInternetOffers">
-<xs:complexType>
-<xs:sequence>
-<xs:element name="input" type="tns:input"/>
-</xs:sequence>
-</xs:complexType>
-</xs:element>
-</xs:schema>
-</wsdl:types>
-<wsdl:portType name="GetInternetOffersPort"> </wsdl:portType>
-<wsdl:binding name="GetInternetOffersPortSoap11" type="tns:GetInternetOffersPort">
-<soap:binding style="document" transport="http://schemas.xmlsoap.org/soap/http"/>
-</wsdl:binding>
-<wsdl:service name="GetInternetOffersPortService">
-<wsdl:port binding="tns:GetInternetOffersPortSoap11" name="GetInternetOffersPortSoap11">
-<soap:address location="https://webwunder.gendev7.check24.fun:443/endpunkte/soap/ws"/>
-</wsdl:port>
-</wsdl:service>
-</wsdl:definitions>
+openapi: 3.0.0
+info:
+  title: Internet Offers Service
+  description: API for retrieving internet offers based on address and connection type.
+  version: 1.0.0
+
+servers:
+  - url: https://webwunder.gendev7.check24.fun:443/endpunkte/soap/ws
+
+paths:
+  /legacyGetInternetOffers:
+    post:
+      summary: Get Internet Offers
+      description: Retrieve available internet offers based on given input data.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Input'
+      responses:
+        200:
+          description: A list of available internet products.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Output'
+
+components:
+  schemas:
+    SupportedCountry:
+      type: string
+      enum: [DE, AT, CH]
+
+    Address:
+      type: object
+      properties:
+        street:
+          type: string
+        houseNumber:
+          type: string
+        city:
+          type: string
+        plz:
+          type: string
+        countryCode:
+          $ref: '#/components/schemas/SupportedCountry'
+
+    ConnectionType:
+      type: string
+      enum: [DSL, CABLE, FIBER, MOBILE]
+
+    Voucher:
+      type: object
+      properties:
+        type:
+          type: string
+          enum: [percentageVoucher, absoluteVoucher]
+
+    PercentageVoucher:
+      allOf:
+        - $ref: '#/components/schemas/Voucher'
+        - type: object
+          properties:
+            percentage:
+              type: integer
+            maxDiscountInCent:
+              type: integer
+
+    AbsoluteVoucher:
+      allOf:
+        - $ref: '#/components/schemas/Voucher'
+        - type: object
+          properties:
+            discountInCent:
+              type: integer
+            minOrderValueInCent:
+              type: integer
+
+    ProductInfo:
+      type: object
+      properties:
+        speed:
+          type: integer
+        monthlyCostInCent:
+          type: integer
+        monthlyCostInCentFrom25thMonth:
+          type: integer
+        voucher:
+          $ref: '#/components/schemas/Voucher'
+        contractDurationInMonths:
+          type: integer
+        connectionType:
+          $ref: '#/components/schemas/ConnectionType'
+
+    Product:
+      type: object
+      properties:
+        productId:
+          type: integer
+        providerName:
+          type: string
+        productInfo:
+          $ref: '#/components/schemas/ProductInfo'
+
+    Output:
+      type: object
+      properties:
+        products:
+          type: array
+          items:
+            $ref: '#/components/schemas/Product'
+
+    Input:
+      type: object
+      properties:
+        installation:
+          type: boolean
+        connectionEnum:
+          $ref: '#/components/schemas/ConnectionType'
+        address:
+          $ref: '#/components/schemas/Address'
