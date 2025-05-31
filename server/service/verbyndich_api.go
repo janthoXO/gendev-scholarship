@@ -12,6 +12,8 @@ import (
 	"server/utils"
 	"strconv"
 	"strings"
+	"sync"
+	"sync/atomic"
 )
 
 type VerbyndichAPI struct{}
@@ -24,99 +26,130 @@ type VerbyndichResponse struct {
 }
 
 func (api *VerbyndichAPI) GetOffersStream(ctx context.Context, address domain.Address, offersChannel *utils.PubSubChannel[domain.Offer], errChannel chan<- error) {
-	// Format the address as required: "street;house number;city;plz"
-	addressStr := fmt.Sprintf("%s;%s;%s;%s",
-		address.Street,
-		address.HouseNumber,
-		address.City,
-		address.ZipCode)
+    // Format the address as required: "street;house number;city;plz"
+    addressStr := fmt.Sprintf("%s;%s;%s;%s",
+        address.Street,
+        address.HouseNumber,
+        address.City,
+        address.ZipCode)
 
-	// We need to fetch all pages
-	page := 0
-	lastPage := false
+    // Worker pool setup
+    const numWorkers = 5
+    pageChannel := make(chan int, numWorkers*2) // Buffer to prevent blocking
+    var lastPageFound int32 // Atomic flag to signal when last page is found
+    
+    // Start workers
+    var wg sync.WaitGroup
+    for i := 0; i < numWorkers; i++ {
+        wg.Add(1)
+        go func() {
+            defer wg.Done()
+            api.worker(ctx, addressStr, pageChannel, &lastPageFound, offersChannel, errChannel)
+        }()
+    }
 
-	for !lastPage {
-		// Check if context is done before starting the request
-		select {
-		case <-ctx.Done():
-			return
-		default:
-		}
+    // Page dispatcher - sends page numbers to workers
+    go func() {
+        defer close(pageChannel)
+        page := 0
+        for {
+            // Check if we should stop dispatching
+            if atomic.LoadInt32(&lastPageFound) == 1 {
+                return
+            }
+            
+            select {
+            case <-ctx.Done():
+                return
+            case pageChannel <- page:
+                page++
+            }
+        }
+    }()
 
-		// Build the URL with query parameters
-		baseURL := "https://verbyndich.gendev7.check24.fun/check24/data"
-		u, err := url.Parse(baseURL)
-		if err != nil {
-			select {
-			case <-ctx.Done():
-				return
-			case errChannel <- fmt.Errorf("%s: failed to parse URL: %w", api.GetProviderName(), err):
-			}
-			return
-		}
+    // Wait for all workers to finish
+    wg.Wait()
+}
 
-		q := u.Query()
-		q.Add("apiKey", utils.Cfg.VerbynDich.ApiKey)
-		q.Add("page", strconv.Itoa(page))
-		u.RawQuery = q.Encode()
+func (api *VerbyndichAPI) worker(ctx context.Context, addressStr string, pageChannel <-chan int, lastPageFound *int32, offersChannel *utils.PubSubChannel[domain.Offer], errChannel chan<- error) {
+    for {
+        select {
+        case <-ctx.Done():
+            return
+        case page, ok := <-pageChannel:
+            if !ok {
+                return // Channel closed, no more work
+            }
+            
+            // Process this page
+            response, err := api.fetchPage(ctx, addressStr, page)
+            if err != nil {
+                select {
+                case <-ctx.Done():
+                    return
+                case errChannel <- err:
+                }
+                continue
+            }
 
-		// Send the request
-		response, err := utils.RetryWrapper(ctx, func() (*VerbyndichResponse, error) {
-			// Create the request with context
-			req, err := http.NewRequestWithContext(ctx, "POST", u.String(), strings.NewReader(addressStr))
-			if err != nil {
-				return nil, fmt.Errorf("%s: failed to create request: %w", api.GetProviderName(), err)
-			}
+            // Check if this is the last page
+            if response.Last {
+                atomic.StoreInt32(lastPageFound, 1)
+            }
 
-			client := &http.Client{}
-			resp, err := client.Do(req)
-			if err != nil {
-				return nil, err
-			}
-			defer resp.Body.Close()
+            // Process the offer if it's valid
+            if response.Valid {
+                offer := domain.Offer{}
+                offer.ProductName = response.Product
+                
+                if err := api.parseVerbyndichDescription(response.Description, &offer); err == nil {
+                    offer.Provider = api.GetProviderName()
+                    offer.HelperIsPreliminary = false
+                    offersChannel.Publish(offer)
+                }
+            }
+        }
+    }
+}
 
-			// Check the response status
-			if resp.StatusCode != http.StatusOK {
-				bodyBytes, _ := io.ReadAll(resp.Body)
-				return nil, fmt.Errorf("%s: received non-200 response: %d with body %s", api.GetProviderName(), resp.StatusCode, bodyBytes)
-			}
+func (api *VerbyndichAPI) fetchPage(ctx context.Context, addressStr string, page int) (*VerbyndichResponse, error) {
+    // Build the URL with query parameters
+    baseURL := "https://verbyndich.gendev7.check24.fun/check24/data"
+    u, err := url.Parse(baseURL)
+    if err != nil {
+        return nil, fmt.Errorf("%s: failed to parse URL: %w", api.GetProviderName(), err)
+    }
 
-			var response VerbyndichResponse
-			err = json.NewDecoder(resp.Body).Decode(&response)
-			return &response, err
-		})
-		if err != nil {
-			select {
-			case <-ctx.Done():
-				return
-			case errChannel <- err:
-			}
-			return
-		}
+    q := u.Query()
+    q.Add("apiKey", utils.Cfg.VerbynDich.ApiKey)
+    q.Add("page", strconv.Itoa(page))
+    u.RawQuery = q.Encode()
 
-		// Check if this is the last page
-		lastPage = response.Last
-		offer := domain.Offer{}
-		offer.ProductName = response.Product
+    // Send the request
+    return utils.RetryWrapper(ctx, func() (*VerbyndichResponse, error) {
+        // Create the request with context
+        req, err := http.NewRequestWithContext(ctx, "POST", u.String(), strings.NewReader(addressStr))
+        if err != nil {
+            return nil, fmt.Errorf("%s: failed to create request: %w", api.GetProviderName(), err)
+        }
 
-		// Process the offer if it's valid
-		if response.Valid {
-			// Parse the description to extract offer details
-			if err := api.parseVerbyndichDescription(response.Description, &offer); err == nil {
-				offer.Provider = api.GetProviderName()
-				offer.HelperIsPreliminary = false
-				offersChannel.Publish(offer)
-				select {
-				case <-ctx.Done():
-					return
-				default:
-				}
-			}
-		}
+        client := &http.Client{}
+        resp, err := client.Do(req)
+        if err != nil {
+            return nil, err
+        }
+        defer resp.Body.Close()
 
-		// Move to the next page
-		page++
-	}
+        // Check the response status
+        if resp.StatusCode != http.StatusOK {
+            bodyBytes, _ := io.ReadAll(resp.Body)
+            return nil, fmt.Errorf("%s: received non-200 response: %d with body %s", api.GetProviderName(), resp.StatusCode, bodyBytes)
+        }
+
+        var response VerbyndichResponse
+        err = json.NewDecoder(resp.Body).Decode(&response)
+        return &response, err
+    })
 }
 
 // have to do it in multiple regex because i was not able to write a regex with multiple options after each other

@@ -49,7 +49,7 @@ func (api *PingPerfectApi) GetOffersStream(ctx context.Context, address domain.A
 		PLZ:         address.ZipCode,
 		HouseNumber: address.HouseNumber,
 		City:        address.City,
-		WantsFiber:  false, // Set this based on user preference or default to true
+		WantsFiber:  false, // set to false to get all products, not just fiber
 	}
 
 	// Convert request to JSON
