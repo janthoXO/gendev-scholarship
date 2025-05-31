@@ -238,7 +238,7 @@ func FetchOffersByAddress(c *gin.Context) {
 			}
 		}()
 		// save all live offers in address cache so that if multiple users with different filters request the same address, they can use cached offers
-		dumpChan, addressCacheDone := cacheOffers(ctx, &addressQuery, liveOffersPubSubChannel.Subscribe(), db.OfferCacheInstance.CacheQuery, false)
+		dumpChan, addressCacheDone := cacheOffers(ctx, &addressQuery, liveOffersPubSubChannel.Subscribe(), db.OfferCacheInstance.CacheQuery)
 		utils.DumpChannel(dumpChan)
 
 		// put live offers into combined stream to stream to output
@@ -263,7 +263,7 @@ func FetchOffersByAddress(c *gin.Context) {
 		}(liveOffersPubSubChannel.Subscribe())
 
 		// cache offers for user which are preliminary and live to ensure share links with both contained
-		userCachedOfferChannel, _ := cacheOffers(ctx, &userQuery, combinedOfferChannel, db.UserOfferCacheInstance.CacheQuery, true)
+		userCachedOfferChannel, _ := cacheOffers(ctx, &userQuery, combinedOfferChannel, db.UserOfferCacheInstance.CacheQuery)
 
 		// stream everything that is cached for later sharing to the user
 		offersStreamingDone = handleOfferStreaming(ctx, c.Writer, flusher, userCachedOfferChannel)
@@ -285,7 +285,7 @@ func FetchOffersByAddress(c *gin.Context) {
 
 		// offers by cache are counted as valid as no new api request is made
 		// therefore they need to be saved in the user cache
-		cachedOffers, _ := cacheOffers(ctx, &userQuery, combinedOfferChannel, db.UserOfferCacheInstance.CacheQuery, false)
+		cachedOffers, _ := cacheOffers(ctx, &userQuery, combinedOfferChannel, db.UserOfferCacheInstance.CacheQuery)
 		offersStreamingDone = handleOfferStreaming(ctx, c.Writer, flusher, cachedOffers)
 
 		// wait until cached offers are all in streaming channel
@@ -433,7 +433,7 @@ func FetchSharedOffers(c *gin.Context) {
 	}
 }
 
-func cacheOffers(ctx context.Context, query *domain.Query, offersChannel <-chan domain.Offer, cacheFunc func(ctx context.Context, query domain.Query) error, isUserCache bool) (<-chan domain.Offer, <-chan struct{}) {
+func cacheOffers(ctx context.Context, query *domain.Query, offersChannel <-chan domain.Offer, cacheFunc func(ctx context.Context, query domain.Query) error) (<-chan domain.Offer, <-chan struct{}) {
 	done := make(chan struct{})
 	cachedOffersChannel := make(chan domain.Offer)
 
