@@ -16,7 +16,7 @@ type Configuration struct {
 	OfferCache struct {
 		Url      string `env:"OFFER_CACHE_URL,notEmpty"`
 		Password string `env:"OFFER_CACHE_PASSWORD,notEmpty"`
-		TTL    int64  `env:"OFFER_CACHE_TTL_SEC" envDefault:"300"` // 5 minutes
+		TTL      int64  `env:"OFFER_CACHE_TTL_SEC" envDefault:"300"` // 5 minutes
 	}
 	UserOfferCache struct {
 		Url      string `env:"USER_OFFER_CACHE_URL,notEmpty"`
@@ -24,10 +24,10 @@ type Configuration struct {
 		TTL      int64  `env:"USER_OFFER_CACHE_TTL_SEC" envDefault:"86400"` // 24 hours
 	}
 	Server struct {
-		Port               uint   `env:"SERVER_PORT" envDefault:"8080"`
-		FreshnessWindowSec int64  `env:"FRESHNESS_WINDOW_SEC" envDefault:"5"`
-		RetryFrequencySec  []uint `env:"RETRY_FREQUENCY_SEC" envDefault:"2,3,5"`
-		ApiTimeoutSec      uint   `env:"API_TIMEOUT_SEC" envDefault:"30"`
+		Port                uint   `env:"SERVER_PORT" envDefault:"8080"`
+		FreshnessWindowSec  int64  `env:"FRESHNESS_WINDOW_SEC" envDefault:"5"`
+		RetryFrequencyMilli []uint `env:"RETRY_FREQUENCY_MILLI" envDefault:"1000,2000,3000"`
+		ApiTimeoutSec       uint   `env:"API_TIMEOUT_SEC" envDefault:"30"`
 	}
 	VerbynDich struct {
 		ApiKey string `env:"VERBYNDICH_API_KEY,notEmpty"`

@@ -3,6 +3,7 @@ package utils
 import (
 	"context"
 	"fmt"
+	"math/rand"
 	"time"
 )
 
@@ -17,11 +18,15 @@ func RetryWrapper[T any](ctx context.Context, fn RetryableFunc[T]) (ret T, err e
 		return ret, nil // Success
 	}
 
-	for _, delaySeconds := range Cfg.Server.RetryFrequencySec {
+	for _, delaySeconds := range Cfg.Server.RetryFrequencyMilli {
+		// Add jitter: random value between -500 and +500 milliseconds
+		jitter := rand.Intn(1001) - 500
+		jitteredDelay := time.Duration(int(delaySeconds)+jitter) * time.Millisecond
+
 		select {
 		case <-ctx.Done():
 			return ret, ctx.Err()
-		case <-time.After(time.Duration(delaySeconds) * time.Second):
+		case <-time.After(jitteredDelay):
 			// Retry the function
 			ret, err = fn()
 			if err == nil {

@@ -40,7 +40,7 @@ jobs:
             echo "USER_OFFER_CACHE_TTL_SEC=${{ vars.USER_OFFER_CACHE_TTL_SEC }}" >> .env.prod
             echo "API_TIMEOUT_SEC=${{ vars.API_TIMEOUT_SEC }}" >> .env.prod
             echo "FRESHNESS_WINDOW_SEC=${{ vars.FRESHNESS_WINDOW_SEC }}" >> .env.prod
-            echo "RETRY_FREQUENCY_SEC=${{ vars.RETRY_FREQUENCY_SEC }}" >> .env.prod            
+            echo "RETRY_FREQUENCY_MILLI=${{ vars.RETRY_FREQUENCY_MILLI }}" >> .env.prod            
             echo "VERBYNDICH_API_KEY=${{ secrets.VERBYNDICH_API_KEY }}" >> .env.prod
             echo "SERVUSSPEED_USERNAME=${{ secrets.SERVUSSPEED_USERNAME }}" >> .env.prod
             echo "SERVUSSPEED_PASSWORD=${{ secrets.SERVUSSPEED_PASSWORD }}" >> .env.prod
