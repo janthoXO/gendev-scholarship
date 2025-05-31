@@ -61,12 +61,12 @@ type FetchOffersQueryParameters struct {
 }
 
 type FilterOptionParams struct {
-	Provider       *string `form:"provider"`
-	Installation   *bool   `form:"installation"`
-	SpeedMin       *int    `form:"speedMin"`
-	Age            *int    `form:"age"`
-	CostMax        *int    `form:"costMax"`
-	ConnectionType *string `form:"connectionType"`
+	Provider       *string                `form:"provider"`
+	Installation   *bool                  `form:"installation"`
+	SpeedMin       *int                   `form:"speedMin"`
+	Age            *int                   `form:"age"`
+	CostMax        *int                   `form:"costMax"`
+	ConnectionType *domain.ConnectionType `form:"connectionType"`
 }
 
 type OfferFilter func(domain.Offer) bool
@@ -117,7 +117,7 @@ func (filter FilterOptionParams) hash() string {
 		agg += fmt.Sprintf("%d", *filter.CostMax)
 	}
 	if filter.ConnectionType != nil {
-		agg += *filter.ConnectionType
+		agg += (*filter.ConnectionType).String()
 	}
 
 	h.Write([]byte(agg))

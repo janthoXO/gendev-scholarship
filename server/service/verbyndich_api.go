@@ -147,7 +147,7 @@ var regexPatterns = []func(string, *domain.Offer) error{
 					costInEuro, _ := strconv.Atoi(m[i])
 					offer.MonthlyCostInCent = costInEuro * 100
 				case "Type":
-					offer.ConnectionType = m[i]
+					offer.ConnectionType = domain.FromStringToConnectionType(m[i])
 				case "Speed":
 					offer.Speed, _ = strconv.Atoi(m[i])
 				case "MinContract":

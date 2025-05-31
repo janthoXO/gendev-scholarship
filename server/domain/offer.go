@@ -4,6 +4,7 @@ import (
 	"crypto/sha256"
 	"encoding/base64"
 	"fmt"
+	"strings"
 )
 
 type Offer struct {
@@ -14,7 +15,7 @@ type Offer struct {
 	ProductName                  string            `json:"ProductName"`
 	Speed                        int               `json:"speed"`
 	ContractDurationInMonths     int               `json:"contractDurationInMonths"`
-	ConnectionType               string            `json:"connectionType"`
+	ConnectionType               ConnectionType    `json:"connectionType"`
 	Tv                           string            `json:"tv,omitzero"`
 	LimitInGb                    int               `json:"limitInGb,omitzero"`
 	MaxAgePerson                 int               `json:"maxAgePerson,omitzero"`
@@ -40,4 +41,32 @@ func (o *Offer) GenerateHash() {
 		o.MonthlyCostInCent, o.AfterTwoYearsMonthlyCost, o.MonthlyCostInCentWithVoucher, o.InstallationService,
 		o.VoucherType, o.VoucherValue, o.ExtraProperties))
 	o.HelperOfferHash = base64.RawURLEncoding.EncodeToString(h.Sum(nil))
+}
+
+// ConnectionType represents the type of internet connection
+type ConnectionType string
+
+// ConnectionType enum values
+const (
+	DSL   ConnectionType = "DSL"
+	CABLE ConnectionType = "CABLE"
+	FIBER ConnectionType = "FIBER"
+)
+
+func (c ConnectionType) String() string {
+	return string(c)
+}
+
+func FromStringToConnectionType(s string) ConnectionType {
+	s = strings.ToUpper(s) // Normalize to uppercase for comparison
+	switch s {
+	case "DSL":
+		return DSL
+	case "CABLE":
+		return CABLE
+	case "FIBER":
+		return FIBER
+	default:
+		return ConnectionType(s) // Return as is if not recognized
+	}
 }

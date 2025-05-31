@@ -224,7 +224,7 @@ func (api *ServusSpeedApi) convertToOffer(product *ServusSpeedProductResponse) d
 	offer.ProductName = product.ServusSpeedProduct.ProviderName
 	offer.Speed = product.ServusSpeedProduct.ProductInfo.Speed
 	offer.ContractDurationInMonths = product.ServusSpeedProduct.ProductInfo.ContractDurationInMonths
-	offer.ConnectionType = product.ServusSpeedProduct.ProductInfo.ConnectionType
+	offer.ConnectionType = domain.FromStringToConnectionType(product.ServusSpeedProduct.ProductInfo.ConnectionType)
 	offer.Tv = product.ServusSpeedProduct.ProductInfo.Tv
 	offer.LimitInGb = product.ServusSpeedProduct.ProductInfo.LimitFrom
 	offer.MaxAgePerson = product.ServusSpeedProduct.ProductInfo.MaxAge

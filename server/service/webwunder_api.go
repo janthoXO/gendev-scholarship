@@ -222,7 +222,7 @@ func (api *WebWunderApi) soapProductToOffer(product WebWunderSoapProduct) (offer
 	if product.ProductInfo != nil {
 		offer.Speed = product.ProductInfo.Speed
 		offer.ContractDurationInMonths = product.ProductInfo.ContractDurationInMonths
-		offer.ConnectionType = product.ProductInfo.ConnectionType
+		offer.ConnectionType = domain.FromStringToConnectionType(product.ProductInfo.ConnectionType)
 
 		// Map pricing details
 		offer.MonthlyCostInCent = product.ProductInfo.MonthlyCostInCent

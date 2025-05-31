@@ -122,7 +122,7 @@ func (api *ByteMeApi) mapToOffer(item map[string]interface{}) (offer domain.Offe
 
 	// Map string fields
 	if connectionType, ok := item["connectionType"].(string); ok {
-		offer.ConnectionType = connectionType
+		offer.ConnectionType = domain.FromStringToConnectionType(connectionType)
 	}
 
 	if tv, ok := item["tv"].(string); ok {

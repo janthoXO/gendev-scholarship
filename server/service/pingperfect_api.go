@@ -127,7 +127,7 @@ func (api *PingPerfectApi) productToOffer(product PingPerfectProduct) domain.Off
 	offer.ProductName = product.ProviderName
 	offer.Speed = product.ProductInfo.Speed
 	offer.ContractDurationInMonths = product.ProductInfo.ContractDurationInMonths
-	offer.ConnectionType = product.ProductInfo.ConnectionType
+	offer.ConnectionType = domain.FromStringToConnectionType(product.ProductInfo.ConnectionType)
 	offer.Tv = product.ProductInfo.Tv
 	offer.LimitInGb = product.ProductInfo.LimitFrom
 	offer.MaxAgePerson = product.ProductInfo.MaxAge
