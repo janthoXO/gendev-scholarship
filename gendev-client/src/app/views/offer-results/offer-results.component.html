@@ -178,6 +178,22 @@
                 Installation
               </label>
             </div>
+
+            <!-- Sort Dropdown -->
+            <div class="d-flex align-items-center gap-2 ms-auto">
+              <small class="text-muted fw-medium">Sort by:</small>
+              <select
+                class="form-select form-select-sm rounded-2 flex-shrink-0"
+                [value]="sortOption()"
+                (change)="updateSort($event)"
+                style="width: auto; min-width: 160px"
+              >
+                <option value="">Default</option>
+                @for (option of sortOptions; track option.value) {
+                <option [value]="option.value">{{ option.label }}</option>
+                }
+              </select>
+            </div>
           </div>
 
           <!-- Active Filters -->

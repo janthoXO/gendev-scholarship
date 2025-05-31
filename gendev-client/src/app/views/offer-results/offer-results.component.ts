@@ -20,6 +20,11 @@ import {
   FilterOptions,
   isFilterEmpty,
 } from '../../models/filterOptions.model';
+import {
+  SORT_OPTIONS,
+  sortOffers,
+  SortOptionValue,
+} from '../../models/sortOptions.model';
 
 @Component({
   selector: 'app-offer-results',
@@ -41,8 +46,14 @@ export class OfferResultsComponent {
   protected faRedo = faRedo;
   protected faExclamationTriangle = faExclamationTriangle;
 
+  // Available sort options
+  sortOptions = SORT_OPTIONS;
+
   // Share dialog state
   showShareDialog = signal(false);
+
+  // Sort state
+  sortOption = signal<SortOptionValue>('');
 
   private offers = computed(() => {
     const offersMap = this.state.query()?.offers;
@@ -79,7 +90,7 @@ export class OfferResultsComponent {
     return [...new Set(types)].sort();
   });
 
-  // Filtered offers
+  // Filtered and sorted offers
   filteredOffers = computed(() => {
     let offers = this.offers();
     let filter = this.filter();
@@ -88,6 +99,19 @@ export class OfferResultsComponent {
       offers = offers.filter((offer) => {
         return filterOffer(offer, filter);
       });
+    }
+
+    // Apply sorting
+    const sortOption = this.sortOption();
+
+    if (sortOption) {
+      const selectedSortOption = SORT_OPTIONS.find(
+        (option) => option.value === sortOption
+      );
+
+      if (selectedSortOption) {
+        offers = sortOffers(offers, selectedSortOption);
+      }
     }
 
     return offers;
@@ -178,6 +202,9 @@ export class OfferResultsComponent {
       zipCode: '',
     });
 
+    // Clear sorting
+    this.sortOption.set('');
+
     this.state.resetState();
   }
 
@@ -193,6 +220,9 @@ export class OfferResultsComponent {
       costMax: undefined,
       connectionType: '',
     });
+
+    // Also clear sorting
+    this.sortOption.set('');
   }
 
   removeFilter(filterType: string) {
@@ -316,5 +346,11 @@ export class OfferResultsComponent {
 
   closeShareDialog() {
     this.showShareDialog.set(false);
+  }
+
+  // Sort methods
+  updateSort(event: Event) {
+    const target = event.target as HTMLSelectElement;
+    this.sortOption.set(target.value as SortOptionValue);
   }
 }
