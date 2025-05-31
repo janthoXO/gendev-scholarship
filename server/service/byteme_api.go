@@ -144,11 +144,25 @@ func (api *ByteMeApi) mapToOffer(item map[string]interface{}) (offer domain.Offe
 	}
 
 	if voucherType, ok := item["voucherType"].(string); ok {
-		offer.VoucherType = voucherType
-	}
-
-	if voucherValue, ok := item["voucherValue"].(int); ok {
-		offer.VoucherValue = voucherValue
+		if voucherValue, ok := item["voucherValue"].(int); ok {
+			switch voucherType {
+			case "percentage":
+				offer.MonthlyCostInCentWithVoucher = offer.MonthlyCostInCent - (offer.MonthlyCostInCent * voucherValue / 100)
+				offer.VoucherDetails = domain.VoucherDetails{
+					Type:  domain.PERCENTAGE,
+					Value: voucherValue,
+				}
+			case "absolute":
+				if offer.ContractDurationInMonths > 0 {
+					// calculate the voucher if applied to one contract length
+					offer.MonthlyCostInCentWithVoucher = offer.MonthlyCostInCent  - voucherValue / offer.ContractDurationInMonths
+					offer.VoucherDetails = domain.VoucherDetails{
+						Type:  domain.ABSOLUTE,
+						Value: voucherValue,
+					}
+				}
+			}
+		}
 	}
 
 	return offer

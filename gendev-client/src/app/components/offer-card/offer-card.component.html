@@ -76,26 +76,42 @@
       <!-- Pricing Column -->
       <div class="lg:col-span-3 md:col-span-4">
         <div class="text-center space-y-2">
+          @if (offer().monthlyCostInCentWithVoucher && offer().monthlyCostInCentWithVoucher !== offer().monthlyCostInCent) {
+          <!-- Discounted price with original price struck through -->
+          <div>
+            <div class="text-sm text-muted-foreground line-through">€{{ (offer().monthlyCostInCent / 100).toFixed(2) }}</div>
+            <div class="flex items-center justify-center gap-1">
+              <span class="text-2xl font-bold text-primary">€{{ (offer().monthlyCostInCentWithVoucher! / 100).toFixed(2) }}</span>
+              @if (offer().voucherDetails) {
+              <div class="relative group">
+                <fa-icon 
+                  [icon]="faInfoCircle" 
+                  class="text-muted-foreground hover:text-primary text-sm cursor-help transition-colors"
+                ></fa-icon>
+                <!-- Tooltip -->
+                <div class="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-2 bg-popover text-popover-foreground text-xs rounded-lg shadow-md border border-border opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none w-48 text-center z-10">
+                  <span class="whitespace-pre-line">{{ getVoucherDescription() }}</span>
+                  <!-- Arrow -->
+                  <div class="absolute top-full left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-4 border-r-4 border-t-4 border-l-transparent border-r-transparent border-t-border"></div>
+                </div>
+              </div>
+              }
+            </div>
+            <span class="text-sm text-muted-foreground">/month</span>
+          </div>
+          } @else {
+          <!-- Regular price -->
           <div>
             <span class="text-2xl font-bold text-primary">€{{ (offer().monthlyCostInCent / 100).toFixed(2) }}</span>
             <span class="text-sm text-muted-foreground">/month</span>
           </div>
+          }
           
           @if (offer().afterTwoYearsMonthlyCost && offer().afterTwoYearsMonthlyCost !== offer().monthlyCostInCent) {
           <div>
             <span class="text-xs text-muted-foreground">After 2 years: </span>
             <span class="text-sm font-semibold text-foreground">€{{ (offer().afterTwoYearsMonthlyCost! / 100).toFixed(2) }}</span>
           </div>
-          }
-          
-          @if (offer().voucherType && offer().voucherValue) {
-          <span hlmBadge variant="secondary">
-            @if (offer().voucherType === 'percentage') {
-            {{ offer().voucherValue }}% off
-            } @else {
-            €{{ (offer().voucherValue! / 100).toFixed(2) }} off
-            }
-          </span>
           }
         </div>
       </div>

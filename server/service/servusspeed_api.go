@@ -229,9 +229,14 @@ func (api *ServusSpeedApi) convertToOffer(product *ServusSpeedProductResponse) d
 	offer.LimitInGb = product.ServusSpeedProduct.ProductInfo.LimitFrom
 	offer.MaxAgePerson = product.ServusSpeedProduct.ProductInfo.MaxAge
 
+	offer.MonthlyCostInCent = product.ServusSpeedProduct.PricingDetails.MonthlyCostInCent
 	// Handle the discount
-	monthlyCostWithDiscount := product.ServusSpeedProduct.PricingDetails.MonthlyCostInCent - product.ServusSpeedProduct.Discount
-	offer.MonthlyCostInCent = monthlyCostWithDiscount
+	offer.VoucherDetails = domain.VoucherDetails{
+		Type:        domain.ABSOLUTE,
+		Value:       product.ServusSpeedProduct.Discount,
+		Description: "The discount is a fixed discount in Cent",
+	}
+	offer.MonthlyCostInCentWithVoucher = ((offer.MonthlyCostInCent * offer.ContractDurationInMonths) - offer.VoucherDetails.Value) / offer.ContractDurationInMonths
 	offer.InstallationService = product.ServusSpeedProduct.PricingDetails.InstallationService
 
 	return offer

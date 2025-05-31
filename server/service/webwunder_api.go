@@ -100,129 +100,129 @@ type WebWunderSoapVoucher struct {
 }
 
 func (api *WebWunderApi) GetOffersStream(ctx context.Context, address domain.Address, offersChannel *utils.PubSubChannel[domain.Offer], errChannel chan<- error) {
-    // Create a wait group to wait for all workers to complete
-    var wg sync.WaitGroup
-    
-    // Define all connection types to query
-    connectionTypes := []domain.ConnectionType{domain.DSL, domain.CABLE, domain.FIBER, domain.MOBILE}
-    
-    // Define installation service options
+	// Create a wait group to wait for all workers to complete
+	var wg sync.WaitGroup
+
+	// Define all connection types to query
+	connectionTypes := []domain.ConnectionType{domain.DSL, domain.CABLE, domain.FIBER, domain.MOBILE}
+
+	// Define installation service options
 	// there can be offers which are available for both - we will keep them separate
-    installationOptions := []bool{true, false}
-    
-    // Launch a worker for each combination of connection type and installation service
-    for _, connType := range connectionTypes {
-        for _, installation := range installationOptions {
-            wg.Add(1)
-            go func(connType domain.ConnectionType, installation bool) {
-                defer wg.Done()
-                
-                // Create SOAP request envelope
-                soapEnvelope := WebWunderSoapEnvelope{
-                    SoapNS: "http://schemas.xmlsoap.org/soap/envelope/",
-                    GsNS:   "http://webwunder.gendev7.check24.fun/offerservice",
-                    Header: "",
-                    Body: WebWunderSoapBody{
-                        LegacyGetInternetOffers: WebWunderSoapRequest{
-                            Input: WebWunderSoapInput{
-                                Installation:   installation,
-                                ConnectionEnum: connType.String(),
-                                Address: WebWunderSoapAddress{
-                                    Street:      address.Street,
-                                    HouseNumber: address.HouseNumber,
-                                    City:        address.City,
-                                    PLZ:         address.ZipCode,
-                                    CountryCode: "DE", // we only support Germany for now
-                                },
-                            },
-                        },
-                    },
-                }
+	installationOptions := []bool{true, false}
 
-                // Marshal the request to XML
-                requestXML, err := xml.MarshalIndent(soapEnvelope, "", "  ")
-                if err != nil {
-                    select {
-                    case <-ctx.Done():
-                        return
-                    case errChannel <- fmt.Errorf("%s: failed to marshal SOAP request for %s (installation=%t): %w", 
-                        api.GetProviderName(), connType.String(), installation, err):
-                    }
-                    return
-                }
+	// Launch a worker for each combination of connection type and installation service
+	for _, connType := range connectionTypes {
+		for _, installation := range installationOptions {
+			wg.Add(1)
+			go func(connType domain.ConnectionType, installation bool) {
+				defer wg.Done()
 
-                // Create XML declaration and prepend to the request
-                xmlHeader := []byte(`<?xml version="1.0" encoding="UTF-8"?>`)
-                requestXML = append(xmlHeader, requestXML...)
+				// Create SOAP request envelope
+				soapEnvelope := WebWunderSoapEnvelope{
+					SoapNS: "http://schemas.xmlsoap.org/soap/envelope/",
+					GsNS:   "http://webwunder.gendev7.check24.fun/offerservice",
+					Header: "",
+					Body: WebWunderSoapBody{
+						LegacyGetInternetOffers: WebWunderSoapRequest{
+							Input: WebWunderSoapInput{
+								Installation:   installation,
+								ConnectionEnum: connType.String(),
+								Address: WebWunderSoapAddress{
+									Street:      address.Street,
+									HouseNumber: address.HouseNumber,
+									City:        address.City,
+									PLZ:         address.ZipCode,
+									CountryCode: "DE", // we only support Germany for now
+								},
+							},
+						},
+					},
+				}
 
-                // Send the request
-                body, err := utils.RetryWrapper(ctx, func() ([]byte, error) {
-                    // Create HTTP request with the SOAP payload and context
-                    req, err := http.NewRequestWithContext(ctx, "POST", "https://webwunder.gendev7.check24.fun:443/endpunkte/soap/ws", bytes.NewReader(requestXML))
-                    if err != nil {
-                        return nil, fmt.Errorf("%s: failed to create request: %w", api.GetProviderName(), err)
-                    }
+				// Marshal the request to XML
+				requestXML, err := xml.MarshalIndent(soapEnvelope, "", "  ")
+				if err != nil {
+					select {
+					case <-ctx.Done():
+						return
+					case errChannel <- fmt.Errorf("%s: failed to marshal SOAP request for %s (installation=%t): %w",
+						api.GetProviderName(), connType.String(), installation, err):
+					}
+					return
+				}
 
-                    // Set necessary headers
-                    req.Header.Set("Content-Type", "text/xml; charset=utf-8")
-                    req.Header.Set("X-Api-Key", utils.Cfg.WebWunder.ApiKey)
-                    req.Header.Set("SOAPAction", "legacyGetInternetOffers")
+				// Create XML declaration and prepend to the request
+				xmlHeader := []byte(`<?xml version="1.0" encoding="UTF-8"?>`)
+				requestXML = append(xmlHeader, requestXML...)
 
-                    client := &http.Client{}
-                    resp, err := client.Do(req)
-                    if err != nil {
-                        return nil, err
-                    }
-                    defer resp.Body.Close()
+				// Send the request
+				body, err := utils.RetryWrapper(ctx, func() ([]byte, error) {
+					// Create HTTP request with the SOAP payload and context
+					req, err := http.NewRequestWithContext(ctx, "POST", "https://webwunder.gendev7.check24.fun:443/endpunkte/soap/ws", bytes.NewReader(requestXML))
+					if err != nil {
+						return nil, fmt.Errorf("%s: failed to create request: %w", api.GetProviderName(), err)
+					}
 
-                    // Check the response status code
-                    if resp.StatusCode != http.StatusOK {
-                        bodyBytes, _ := io.ReadAll(resp.Body)
-                        return nil, fmt.Errorf("%s: received non-200 response: %d with body %s", api.GetProviderName(), resp.StatusCode, bodyBytes)
-                    }
+					// Set necessary headers
+					req.Header.Set("Content-Type", "text/xml; charset=utf-8")
+					req.Header.Set("X-Api-Key", utils.Cfg.WebWunder.ApiKey)
+					req.Header.Set("SOAPAction", "legacyGetInternetOffers")
 
-                    return io.ReadAll(resp.Body)
-                })
-                if err != nil {
-                    select {
-                    case <-ctx.Done():
-                        return
-                    case errChannel <- err:
-                    }
-                    return
-                }
+					client := &http.Client{}
+					resp, err := client.Do(req)
+					if err != nil {
+						return nil, err
+					}
+					defer resp.Body.Close()
 
-                // Unmarshal the XML response
-                var soapResponse WebWunderSoapResponse
-                if err := xml.Unmarshal(body, &soapResponse); err != nil {
-                    select {
-                    case <-ctx.Done():
-                        return
-                    case errChannel <- fmt.Errorf("%s: failed to unmarshal SOAP response for %s (installation=%v): %w", 
-                        api.GetProviderName(), connType.String(), installation, err):
-                    }
-                    return
-                }
+					// Check the response status code
+					if resp.StatusCode != http.StatusOK {
+						bodyBytes, _ := io.ReadAll(resp.Body)
+						return nil, fmt.Errorf("%s: received non-200 response: %d with body %s", api.GetProviderName(), resp.StatusCode, bodyBytes)
+					}
 
-                // Convert the SOAP response products to domain offers
-                for _, product := range soapResponse.Body.Output.Products {
-                    offer := api.soapProductToOffer(product)
-                    offer.Provider = api.GetProviderName()
-                    offer.InstallationService = installation
-                    offer.HelperIsPreliminary = false
-                    offersChannel.Publish(offer)
-                    select {
-                    case <-ctx.Done():
-                        return
-                    default:
-                    }
-                }
-            }(connType, installation)
-        }
-    }
+					return io.ReadAll(resp.Body)
+				})
+				if err != nil {
+					select {
+					case <-ctx.Done():
+						return
+					case errChannel <- err:
+					}
+					return
+				}
 
-    // Wait for all workers to complete
-    wg.Wait()
+				// Unmarshal the XML response
+				var soapResponse WebWunderSoapResponse
+				if err := xml.Unmarshal(body, &soapResponse); err != nil {
+					select {
+					case <-ctx.Done():
+						return
+					case errChannel <- fmt.Errorf("%s: failed to unmarshal SOAP response for %s (installation=%v): %w",
+						api.GetProviderName(), connType.String(), installation, err):
+					}
+					return
+				}
+
+				// Convert the SOAP response products to domain offers
+				for _, product := range soapResponse.Body.Output.Products {
+					offer := api.soapProductToOffer(product)
+					offer.Provider = api.GetProviderName()
+					offer.InstallationService = installation
+					offer.HelperIsPreliminary = false
+					offersChannel.Publish(offer)
+					select {
+					case <-ctx.Done():
+						return
+					default:
+					}
+				}
+			}(connType, installation)
+		}
+	}
+
+	// Wait for all workers to complete
+	wg.Wait()
 }
 
 // soapProductToOffer converts a WebWunder SOAP product to a domain.Offer
@@ -244,11 +244,26 @@ func (api *WebWunderApi) soapProductToOffer(product WebWunderSoapProduct) (offer
 		// Process voucher if available
 		if product.ProductInfo.Voucher != nil {
 			if product.ProductInfo.Voucher.PercentageVoucher != nil {
-				offer.VoucherType = "percentage"
-				offer.VoucherValue = product.ProductInfo.Voucher.PercentageVoucher.Percentage
+				offer.VoucherDetails = domain.VoucherDetails{
+					Type:  domain.PERCENTAGE,
+					Value: product.ProductInfo.Voucher.PercentageVoucher.Percentage,
+					Description: fmt.Sprintf("Maximum Discount: %d Cent", product.ProductInfo.Voucher.PercentageVoucher.MaxDiscountInCent),
+				}
+				discountOverContractDuration := min(offer.MonthlyCostInCent * offer.ContractDurationInMonths * product.ProductInfo.Voucher.PercentageVoucher.Percentage / 100, product.ProductInfo.Voucher.PercentageVoucher.MaxDiscountInCent)
+
+				offer.MonthlyCostInCentWithVoucher = offer.MonthlyCostInCent - discountOverContractDuration/offer.ContractDurationInMonths
 			} else if product.ProductInfo.Voucher.AbsoluteVoucher != nil {
-				offer.VoucherType = "absolute"
-				offer.VoucherValue = product.ProductInfo.Voucher.AbsoluteVoucher.DiscountInCent
+				offer.VoucherDetails = domain.VoucherDetails{
+					Type:  domain.ABSOLUTE,
+					Value: product.ProductInfo.Voucher.AbsoluteVoucher.DiscountInCent,
+					Description: fmt.Sprintf("Minimal Order Value: %d Cent", product.ProductInfo.Voucher.AbsoluteVoucher.MinOrderValueInCent),
+				}
+
+				priceOverContractDuration := offer.MonthlyCostInCent * offer.ContractDurationInMonths
+				if priceOverContractDuration > product.ProductInfo.Voucher.AbsoluteVoucher.MinOrderValueInCent {
+					offer.MonthlyCostInCentWithVoucher = offer.MonthlyCostInCent - product.ProductInfo.Voucher.AbsoluteVoucher.DiscountInCent/offer.ContractDurationInMonths
+				}
+
 			}
 		}
 	}

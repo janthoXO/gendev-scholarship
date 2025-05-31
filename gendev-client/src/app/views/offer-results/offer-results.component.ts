@@ -187,8 +187,10 @@ export class OfferResultsComponent {
   getSortOptionLabel(): string {
     const currentSortValue = this.sortOption();
     if (!currentSortValue) return 'Default';
-    
-    const option = this.sortOptions.find(opt => opt.value === currentSortValue);
+
+    const option = this.sortOptions.find(
+      (opt) => opt.value === currentSortValue
+    );
     return option?.label || 'Default';
   }
 
@@ -237,7 +239,16 @@ export class OfferResultsComponent {
   }
 
   retrySearch() {
-    this.router.navigate(['/']);
+    this.router.navigate(['/'], { skipLocationChange: true }).then(() => {
+      this.router.navigate(['/offers'], {
+        queryParams: {
+          street: this.addressSearch().street,
+          houseNumber: this.addressSearch().houseNumber,
+          city: this.addressSearch().city,
+          zipCode: this.addressSearch().zipCode,
+        },
+      });
+    });
   }
 
   clearFilters() {

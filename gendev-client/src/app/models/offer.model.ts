@@ -1,3 +1,9 @@
+export interface VoucherDetails {
+  voucherType: 'ABSOLUTE' | 'PERCENTAGE';
+  voucherValue: number;
+  voucherDescription?: string;
+}
+
 export interface Offer {
   provider: string;
   productId?: number;
@@ -12,8 +18,7 @@ export interface Offer {
   afterTwoYearsMonthlyCost?: number;
   monthlyCostInCentWithVoucher?: number;
   installationService: boolean;
-  voucherType?: string;
-  voucherValue?: number;
+  voucherDetails?: VoucherDetails;
   
   isPreliminary: boolean;
   offerHash: string;

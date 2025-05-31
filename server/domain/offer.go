@@ -20,11 +20,10 @@ type Offer struct {
 	LimitInGb                    int               `json:"limitInGb,omitzero"`
 	MaxAgePerson                 int               `json:"maxAgePerson,omitzero"`
 	MonthlyCostInCent            int               `json:"monthlyCostInCent"`
-	AfterTwoYearsMonthlyCost     int               `json:"afterTwoYearsMonthlyCost,omitzero"`
 	MonthlyCostInCentWithVoucher int               `json:"monthlyCostInCentWithVoucher,omitzero"`
+	AfterTwoYearsMonthlyCost     int               `json:"afterTwoYearsMonthlyCost,omitzero"`
 	InstallationService          bool              `json:"installationService"`
-	VoucherType                  string            `json:"voucherType,omitzero"`
-	VoucherValue                 int               `json:"voucherValue,omitzero"`
+	VoucherDetails               VoucherDetails    `json:"voucherDetails,omitzero"`
 	ExtraProperties              map[string]string `json:"extraProperties,omitzero"`
 
 	// helper fields
@@ -36,10 +35,10 @@ type Offer struct {
 
 func (o *Offer) GenerateHash() {
 	h := sha256.New()
-	h.Write(fmt.Appendf(nil, "%s%d%s%d%d%s%s%d%d%d%d%d%t%s%d%v", o.Provider, o.ProductID, o.ProductName,
+	h.Write(fmt.Appendf(nil, "%s%d%s%d%d%s%s%d%d%d%d%d%t%s%v", o.Provider, o.ProductID, o.ProductName,
 		o.Speed, o.ContractDurationInMonths, o.ConnectionType, o.Tv, o.LimitInGb, o.MaxAgePerson,
 		o.MonthlyCostInCent, o.AfterTwoYearsMonthlyCost, o.MonthlyCostInCentWithVoucher, o.InstallationService,
-		o.VoucherType, o.VoucherValue, o.ExtraProperties))
+		o.VoucherDetails.GetHash(), o.ExtraProperties))
 	o.HelperOfferHash = base64.RawURLEncoding.EncodeToString(h.Sum(nil))
 }
 
@@ -72,4 +71,23 @@ func FromStringToConnectionType(s string) ConnectionType {
 	default:
 		return ConnectionType(s) // Return as is if not recognized
 	}
+}
+
+type VoucherType string
+
+const (
+	ABSOLUTE VoucherType = "ABSOLUTE"
+	PERCENTAGE VoucherType = "PERCENTAGE"
+)
+
+type VoucherDetails struct {
+	Type  VoucherType `json:"voucherType"`
+	Value int    `json:"voucherValue"`
+	Description string `json:"voucherDescription,omitempty"`
+}
+
+func (v *VoucherDetails) GetHash() string {
+	h := sha256.New()
+	h.Write(fmt.Appendf(nil, "%s%d", v.Type, v.Value))
+	return string(h.Sum(nil))
 }
