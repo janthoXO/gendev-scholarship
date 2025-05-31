@@ -8,7 +8,7 @@ import (
 
 type Configuration struct {
 	Database struct {
-		Url     string `env:"SHARE_DB_URL,notEmpty"`
+		Url      string `env:"SHARE_DB_URL,notEmpty"`
 		Name     string `env:"SHARE_DB_NAME,notEmpty"`
 		User     string `env:"SHARE_DB_USER,notEmpty"`
 		Password string `env:"SHARE_DB_PASSWORD,notEmpty"`
@@ -16,16 +16,18 @@ type Configuration struct {
 	OfferCache struct {
 		Url      string `env:"OFFER_CACHE_URL,notEmpty"`
 		Password string `env:"OFFER_CACHE_PASSWORD,notEmpty"`
+		TTL    int64  `env:"OFFER_CACHE_TTL_SEC" envDefault:"300"` // 5 minutes
 	}
 	UserOfferCache struct {
 		Url      string `env:"USER_OFFER_CACHE_URL,notEmpty"`
 		Password string `env:"USER_OFFER_CACHE_PASSWORD,notEmpty"`
+		TTL      int64  `env:"USER_OFFER_CACHE_TTL_SEC" envDefault:"86400"` // 24 hours
 	}
 	Server struct {
-		Port              uint   `env:"SERVER_PORT" envDefault:"8080"`
-		ApiCooldownSec    int64  `env:"API_COOLDOWN_SECONDS" envDefault:"5"`        // in milliseconds
-		RetryFrequencySec []uint `env:"RETRY_FREQUENCY_SECONDS" envDefault:"2,3,5"` // in seconds
-		ApiTimeoutSec     uint   `env:"API_TIMEOUT" envDefault:"30"`
+		Port               uint   `env:"SERVER_PORT" envDefault:"8080"`
+		FreshnessWindowSec int64  `env:"FRESHNESS_WINDOW_SEC" envDefault:"5"`
+		RetryFrequencySec  []uint `env:"RETRY_FREQUENCY_SEC" envDefault:"2,3,5"`
+		ApiTimeoutSec      uint   `env:"API_TIMEOUT_SEC" envDefault:"30"`
 	}
 	VerbynDich struct {
 		ApiKey string `env:"VERBYNDICH_API_KEY,notEmpty"`

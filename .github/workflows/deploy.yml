@@ -35,8 +35,12 @@ jobs:
             echo "SHARE_DB_USER=${{ secrets.SHARE_DB_USER }}" >> .env.prod
             echo "SHARE_DB_PASSWORD=${{ secrets.SHARE_DB_PASSWORD }}" >> .env.prod
             echo "OFFER_CACHE_PASSWORD=${{ secrets.OFFER_CACHE_PASSWORD }}" >> .env.prod
+            echo "OFFER_CACHE_TTL_SEC=${{ vars.OFFER_CACHE_TTL_SEC }}" >> .env.prod
             echo "USER_OFFER_CACHE_PASSWORD=${{ secrets.USER_OFFER_CACHE_PASSWORD }}" >> .env.prod
-            echo "API_TIMEOUT=${{ vars.API_TIMEOUT }}" >> .env.prod
+            echo "USER_OFFER_CACHE_TTL_SEC=${{ vars.USER_OFFER_CACHE_TTL_SEC }}" >> .env.prod
+            echo "API_TIMEOUT_SEC=${{ vars.API_TIMEOUT_SEC }}" >> .env.prod
+            echo "FRESHNESS_WINDOW_SEC=${{ vars.FRESHNESS_WINDOW_SEC }}" >> .env.prod
+            echo "RETRY_FREQUENCY_SEC=${{ vars.RETRY_FREQUENCY_SEC }}" >> .env.prod            
             echo "VERBYNDICH_API_KEY=${{ secrets.VERBYNDICH_API_KEY }}" >> .env.prod
             echo "SERVUSSPEED_USERNAME=${{ secrets.SERVUSSPEED_USERNAME }}" >> .env.prod
             echo "SERVUSSPEED_PASSWORD=${{ secrets.SERVUSSPEED_PASSWORD }}" >> .env.prod

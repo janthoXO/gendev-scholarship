@@ -79,7 +79,7 @@ func (cache offerCache) CacheQuery(ctx context.Context, query domain.Query) erro
 
 	key := cache.cacheKey(query)
 	// Cache for 1 day
-	if err := cache.redisClient.Set(ctx, key, data, time.Hour*24).Err(); err != nil {
+	if err := cache.redisClient.Set(ctx, key, data, time.Duration(utils.Cfg.OfferCache.TTL) * time.Second).Err(); err != nil {
 		log.WithError(err).Error("Failed to store query in Redis")
 	}
 

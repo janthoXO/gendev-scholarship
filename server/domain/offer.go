@@ -12,7 +12,7 @@ type Offer struct {
 
 	Provider                     string            `json:"provider"`
 	ProductID                    int               `json:"productId,omitzero"`
-	ProductName                  string            `json:"ProductName"`
+	ProductName                  string            `json:"productName"`
 	Speed                        int               `json:"speed"`
 	ContractDurationInMonths     int               `json:"contractDurationInMonths"`
 	ConnectionType               ConnectionType    `json:"connectionType"`

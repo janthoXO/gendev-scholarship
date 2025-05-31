@@ -85,7 +85,7 @@ func (cache userOfferCache) CacheQuery(ctx context.Context, query domain.Query) 
 
 	key := cache.cacheKey(query)
 	// Cache for 1 day
-	if err := UserOfferCacheInstance.redisClient.Set(ctx, key, data, time.Hour*24).Err(); err != nil {
+	if err := UserOfferCacheInstance.redisClient.Set(ctx, key, data, time.Duration(utils.Cfg.UserOfferCache.TTL) * time.Second).Err(); err != nil {
 		log.WithError(err).Error("Failed to store query in Redis")
 		return fmt.Errorf("failed to store query in Redis: %w", err)
 	}

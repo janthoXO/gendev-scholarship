@@ -1,2 +1,4 @@
 # env file
 .env
+
+.github/copilot-instructions.md

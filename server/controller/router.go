@@ -204,7 +204,7 @@ func FetchOffersByAddress(c *gin.Context) {
 	cachedOffersInStream := make(chan struct{})
 	if cachedQuery, _ := db.OfferCacheInstance.GetCachedQuery(ctx, addressQuery); cachedQuery != nil {
 		log.Debugf("Found cached query for address %s", addressQuery.Address)
-		shouldApiRequest = now-cachedQuery.Timestamp > utils.Cfg.Server.ApiCooldownSec
+		shouldApiRequest = now-cachedQuery.Timestamp > utils.Cfg.Server.FreshnessWindowSec
 
 		go func() {
 			for _, offer := range cachedQuery.Offers {
