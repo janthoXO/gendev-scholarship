@@ -1,164 +1,30 @@
-/* Apple-inspired Share Dialog Styles */
+/* Minimal custom styles - using Bootstrap 5.3 modal and utilities */
 
-.apple-modal-backdrop {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background-color: rgba(0, 0, 0, 0.5);
-  backdrop-filter: blur(10px);
-  z-index: 1055;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  animation: fadeIn 0.2s ease-out;
+/* Modal backdrop blur enhancement (not available in Bootstrap) */
+.modal-backdrop {
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
 }
 
-.apple-modal-dialog {
-  background: white;
-  border-radius: 12px;
-  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
-  max-width: 500px;
-  width: 90%;
-  max-height: 90vh;
-  overflow: hidden;
-  animation: slideIn 0.3s ease-out;
+/* Ensure modal takes full viewport and prevents scrolling */
+.modal {
+  position: fixed !important;
+  top: 0 !important;
+  left: 0 !important;
+  width: 100% !important;
+  height: 100% !important;
+  overflow-x: hidden !important;
+  overflow-y: auto !important;
 }
 
-.apple-modal-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 20px 24px 16px;
-  border-bottom: 1px solid #e5e7eb;
+/* Enhanced modal appearance */
+.modal-content {
+  border-radius: 12px !important;
 }
 
-.apple-modal-title {
-  font-size: 1.125rem;
-  font-weight: 600;
-  margin: 0;
-  color: #111827;
-}
-
-.apple-close-btn {
-  background: none;
-  border: none;
-  color: #6b7280;
-  font-size: 1.25rem;
-  padding: 4px;
-  border-radius: 6px;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 32px;
-  height: 32px;
-}
-
-.apple-close-btn:hover {
-  background-color: #f3f4f6;
-  color: #374151;
-}
-
-.apple-modal-body {
-  padding: 16px 24px;
-}
-
-.apple-link-container {
-  display: flex;
-  border: 2px solid #e5e7eb;
-  border-radius: 8px;
-  overflow: hidden;
-  transition: border-color 0.2s ease;
-}
-
-.apple-link-container:focus-within {
-  border-color: #3b82f6;
-  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
-}
-
-.apple-link-input {
-  flex: 1;
-  border: none;
-  padding: 12px 16px;
-  font-size: 0.875rem;
-  font-family: 'SF Mono', Monaco, 'Cascadia Code', 'Roboto Mono', Consolas, 'Courier New', monospace;
-  background: #f9fafb;
-  color: #374151;
-}
-
-.apple-link-input:focus {
-  outline: none;
-}
-
-.apple-copy-btn {
-  background: #3b82f6;
-  border: none;
-  color: white;
-  padding: 12px 16px;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  font-size: 0.875rem;
-  min-width: 48px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.apple-copy-btn:hover {
-  background: #2563eb;
-}
-
-.apple-copy-btn.copied {
-  background: #10b981;
-}
-
-.apple-copy-btn.copied:hover {
-  background: #059669;
-}
-
-.apple-success-message {
-  margin-top: 12px;
-  padding: 8px 12px;
-  background: #d1fae5;
-  color: #065f46;
-  border-radius: 6px;
-  font-size: 0.875rem;
-  font-weight: 500;
-  display: flex;
-  align-items: center;
+/* Subtle animation for success alert */
+.alert-success {
   animation: slideDown 0.3s ease-out;
-}
-
-.apple-modal-footer {
-  padding: 16px 24px 20px;
-  border-top: 1px solid #e5e7eb;
-  display: flex;
-  justify-content: flex-end;
-  gap: 12px;
-}
-
-/* Animations */
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-  }
-  to {
-    opacity: 1;
-  }
-}
-
-@keyframes slideIn {
-  from {
-    opacity: 0;
-    transform: translateY(-20px) scale(0.95);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0) scale(1);
-  }
 }
 
 @keyframes slideDown {
@@ -169,30 +35,5 @@
   to {
     opacity: 1;
     transform: translateY(0);
-  }
-}
-
-/* Responsive adjustments */
-@media (max-width: 576px) {
-  .apple-modal-dialog {
-    width: 95%;
-    margin: 20px;
-  }
-  
-  .apple-modal-header,
-  .apple-modal-body,
-  .apple-modal-footer {
-    padding-left: 16px;
-    padding-right: 16px;
-  }
-  
-  .apple-link-input {
-    font-size: 0.75rem;
-    padding: 10px 12px;
-  }
-  
-  .apple-copy-btn {
-    padding: 10px 12px;
-    min-width: 44px;
   }
 }

@@ -1,4 +1,4 @@
-import { Component, signal, effect, input, output } from '@angular/core';
+import { Component, signal, effect, input, output, OnDestroy, HostListener } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import {
@@ -19,7 +19,7 @@ import { State } from '../../services/state';
   styleUrl: './share-dialog.component.css',
   standalone: true,
 })
-export class ShareDialogComponent {
+export class ShareDialogComponent implements OnDestroy {
   protected faClose = faClose;
   protected faCopy = faCopy;
   protected faCheck = faCheck;
@@ -38,7 +38,7 @@ export class ShareDialogComponent {
   isGeneratingLink = signal(false);
 
   constructor(private searchService: SearchService, private state: State) {
-    // Watch for show changes to trigger share link generation
+    // Watch for show changes to trigger share link generation and manage body scroll
     effect(() => {
       if (this.show() && this.queryHash() && this.state.sessionId()) {
         this.generateShareLink(
@@ -46,8 +46,12 @@ export class ShareDialogComponent {
           this.state.sessionId(),
           this.filters() || undefined
         );
+        // Prevent body scrolling when modal is open
+        document.body.style.overflow = 'hidden';
       } else if (!this.show()) {
         this.resetState();
+        // Restore body scrolling when modal is closed
+        document.body.style.overflow = '';
       }
     });
   }
@@ -116,5 +120,17 @@ export class ShareDialogComponent {
     this.linkCopied.set(false);
     this.error.set(null);
     this.isGeneratingLink.set(false);
+  }
+
+  ngOnDestroy() {
+    // Ensure body scrolling is restored when component is destroyed
+    document.body.style.overflow = '';
+  }
+
+  @HostListener('document:keydown.escape', ['$event'])
+  onEscapeKey(event: KeyboardEvent) {
+    if (this.show()) {
+      this.closeDialog();
+    }
   }
 }

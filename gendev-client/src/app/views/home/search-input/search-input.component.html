@@ -1,70 +1,79 @@
-<div class="search-container">
-  <div class="search-box" [class.expanded]="isExpanded()">
-    <div class="search-icon" (click)="toggleExpanded()">
+<div class="d-flex justify-content-center align-items-center py-5 px-3" style="min-height: 60vh;">
+  <div class="glass-effect shadow-lg position-relative cursor-pointer transition-all"
+       [class]="isExpanded() ? 'p-4 expanded-search rounded-4' : 'py-3 px-4 collapsed-search rounded-pill'"
+       [ngClass]="{'card-hover': !isExpanded()}">
+    
+    <div class="text-secondary d-flex align-items-center"
+         [class]="isExpanded() ? 'd-none' : 'position-absolute start-0 top-50 translate-middle-y ms-3'"
+         (click)="toggleExpanded()">
       <svg
         width="20"
         height="20"
         viewBox="0 0 24 24"
         fill="none"
         stroke="currentColor"
-      >
+        class="me-2">
         <circle cx="11" cy="11" r="8"></circle>
         <path d="M21 21l-4.35-4.35"></path>
       </svg>
     </div>
 
     @if (isExpanded()) {
-    <form (ngSubmit)="onSubmit()" class="search-form">
-      <div class="form-group">
+    <form (ngSubmit)="onSubmit()">
+      <div class="mb-3">
         <input
           type="text"
           [(ngModel)]="street"
           name="street"
           placeholder="Street"
-          class="form-input"
+          class="form-control form-control-lg rounded-3"
           required
         />
       </div>
 
-      <div class="form-group">
+      <div class="mb-3">
         <input
           type="text"
           [(ngModel)]="houseNumber"
           name="houseNumber"
           placeholder="House Number"
-          class="form-input"
+          class="form-control form-control-lg rounded-3"
           required
         />
       </div>
 
-      <div class="form-group">
+      <div class="mb-3">
         <input
           type="text"
           [(ngModel)]="city"
           name="city"
           placeholder="City"
-          class="form-input"
+          class="form-control form-control-lg rounded-3"
           required
         />
       </div>
 
-      <div class="form-group">
+      <div class="mb-3">
         <input
           type="text"
           [(ngModel)]="zipCode"
           name="zipCode"
           placeholder="ZIP Code"
-          class="form-input"
+          class="form-control form-control-lg rounded-3"
           required
         />
       </div>
 
-      <button type="submit" class="search-button" [disabled]="!isFormValid()">
+      <button type="submit" 
+              class="btn btn-gradient btn-lg rounded-3 fw-semibold w-100 hover-lift" 
+              [disabled]="!isFormValid()">
         Search Offers
       </button>
     </form>
     } @else {
-    <div class="search-placeholder" (click)="toggleExpanded()">
+    <div class="text-secondary user-select-none ms-5 py-1" 
+         (click)="toggleExpanded()"
+         style="cursor: pointer;">
       Search for internet offers by address...
     </div>
     }

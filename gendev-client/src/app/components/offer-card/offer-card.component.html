@@ -1,4 +1,4 @@
-<div class="card shadow-sm border rounded-4 offer-card" [class.preliminary]="offer().isPreliminary">
+<div class="card shadow-sm border rounded-4 offer-card hover-lift" [class.preliminary]="offer().isPreliminary">
   <div class="card-body p-lg-4 p-md-3 p-2">
     <div class="row align-items-center">
       <!-- Provider Info Column -->
@@ -72,7 +72,7 @@
         <div class="d-flex flex-wrap gap-1 justify-content-lg-end justify-content-md-start">
           @if (offer().installationService) {
           <span class="badge rounded-pill text-bg-primary border px-2 py-1 small text-uppercase fw-semibold">
-            Installation
+            Installation included
           </span>
           }
           @if (offer().maxAgePerson) {
