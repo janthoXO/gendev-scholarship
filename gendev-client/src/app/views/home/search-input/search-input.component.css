@@ -1,44 +1,35 @@
 
-/* Custom styles that can't be achieved with Bootstrap alone */
+/* Enhanced responsive search input styling */
 .collapsed-search {
-  width: 400px;
-  min-width: 400px;
+  width: 420px;
+  min-width: 420px;
 }
 
 .expanded-search {
-  width: 500px;
-  min-width: 500px;
+  width: 540px;
+  min-width: 540px;
 }
 
 .transition-all {
-  transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-.cursor-pointer {
-  cursor: pointer;
+/* Smooth hover effects for better UX */
+.hover-lift:hover:not(:disabled) {
+  transform: translateY(-2px);
+  transition: all 0.2s ease-out;
 }
 
-/* Ensure proper border radius for expanded state */
-.expanded-search {
-  border-radius: 1rem !important;
-}
-
-/* Focus styles for form inputs */
-.form-control:focus {
-  border-color: #3b82f6;
-  box-shadow: 0 0 0 0.2rem rgba(59, 130, 246, 0.1);
-}
-
-/* Mobile responsiveness */
+/* Mobile responsiveness with improved spacing */
 @media (max-width: 640px) {
   .collapsed-search {
-    width: 320px !important;
-    min-width: 300px !important;
+    width: 340px !important;
+    min-width: 320px !important;
   }
   
   .expanded-search {
     width: 100% !important;
-    max-width: 400px !important;
-    min-width: 300px !important;
+    max-width: 420px !important;
+    min-width: 320px !important;
   }
 }

@@ -1,29 +1,57 @@
-<div class="home-container">
-  <div class="hero-section">
-    <h1 class="hero-title">Find the Best Internet Offers</h1>
-    <p class="hero-subtitle">
-      Compare internet providers and find the perfect plan for your address
-    </p>
+<div class="min-h-screen bg-background">
+  <!-- Hero Section with proper spacing -->
+  <div class="container mx-auto px-6 py-16 sm:py-20 lg:py-24">
+  
+    <!-- Main content area -->
+    <div class="text-center max-w-5xl mx-auto">
+      <!-- Title -->
+      <h1 class="text-5xl sm:text-6xl lg:text-7xl font-semibold tracking-tight mb-6 leading-[1.1]">
+        Find the Best Internet Offers
+      </h1>
+      
+      <!-- Subtitle -->
+      <p class="text-xl sm:text-2xl text-muted-foreground font-light max-w-3xl mx-auto leading-relaxed">
+        Compare internet providers and find the perfect plan for your address
+      </p>
 
-    <app-search-input
-      (searchSubmitted)="onSearchSubmitted($event)"
-    ></app-search-input>
+      <!-- Search Input -->
+      <div>
+        <app-search-input
+          (searchSubmitted)="onSearchSubmitted($event)"
+        ></app-search-input>
+      </div>
 
-    <div class="features">
-      <div class="feature">
-        <div class="feature-icon">⚡</div>
-        <h3>Fast Comparison</h3>
-        <p>Compare offers from multiple providers instantly</p>
-      </div>
-      <div class="feature">
-        <div class="feature-icon">💰</div>
-        <h3>Best Prices</h3>
-        <p>Find the most competitive rates in your area</p>
-      </div>
-      <div class="feature">
-        <div class="feature-icon">📊</div>
-        <h3>Detailed Info</h3>
-        <p>Get comprehensive details about each offer</p>
+      <!-- Features Grid -->
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-8 lg:gap-12 max-w-6xl mx-auto">
+        <div class="feature group">
+          <div class="bg-card rounded-3xl p-8 lg:p-10 shadow-sm border border-border transition-all duration-500 hover:shadow-xl hover:-translate-y-1 hover:scale-[1.02]">
+            <div class="w-16 h-16 bg-primary rounded-2xl flex items-center justify-center mb-6 mx-auto">
+              <span class="text-2xl text-primary-foreground">⚡</span>
+            </div>
+            <h3 class="text-2xl font-semibold text-card-foreground mb-4">Fast Comparison</h3>
+            <p class="text-muted-foreground text-lg leading-relaxed">Compare offers from multiple providers instantly with our streamlined interface</p>
+          </div>
+        </div>
+        
+        <div class="feature group">
+          <div class="bg-card rounded-3xl p-8 lg:p-10 shadow-sm border border-border transition-all duration-500 hover:shadow-xl hover:-translate-y-1 hover:scale-[1.02]">
+            <div class="w-16 h-16 bg-secondary rounded-2xl flex items-center justify-center mb-6 mx-auto">
+              <span class="text-2xl text-secondary-foreground">💰</span>
+            </div>
+            <h3 class="text-2xl font-semibold text-card-foreground mb-4">Best Prices</h3>
+            <p class="text-muted-foreground text-lg leading-relaxed">Find the most competitive rates and exclusive deals in your area</p>
+          </div>
+        </div>
+        
+        <div class="feature group">
+          <div class="bg-card rounded-3xl p-8 lg:p-10 shadow-sm border border-border transition-all duration-500 hover:shadow-xl hover:-translate-y-1 hover:scale-[1.02]">
+            <div class="w-16 h-16 bg-accent rounded-2xl flex items-center justify-center mb-6 mx-auto">
+              <span class="text-2xl text-accent-foreground">📊</span>
+            </div>
+            <h3 class="text-2xl font-semibold text-card-foreground mb-4">Detailed Info</h3>
+            <p class="text-muted-foreground text-lg leading-relaxed">Get comprehensive details and transparent information about each offer</p>
+          </div>
+        </div>
       </div>
     </div>
   </div>

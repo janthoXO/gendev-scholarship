@@ -1,59 +1,51 @@
-<div class="container-fluid bg-light min-vh-100">
-  <!-- Apple-inspired Fixed Header using Bootstrap -->
-  <div
-    class="sticky-top bg-white bg-opacity-95 border-bottom shadow-sm backdrop-blur"
-  >
-    <div class="container-xxl">
+<div class="min-h-screen bg-gradient-to-br from-background via-secondary/10 to-primary/5">
+  <!-- Fixed Header with modern design -->
+  <div class="sticky top-0 bg-background/95 backdrop-blur-xl border-b border-border shadow-sm z-10">
+    <div class="max-w-7xl mx-auto px-4">
       <!-- Main Search Section -->
       <div class="py-3">
-        <div class="row align-items-center">
-          <div class="col-lg-8">
+        <div class="flex flex-col lg:flex-row lg:items-center gap-4">
+          <div class="flex-1">
             <form (ngSubmit)="onSearchSubmit()" novalidate>
-              <div class="d-flex gap-2 align-items-stretch flex-wrap">
-                <div class="flex-fill" style="min-width: 150px">
+              <div class="flex gap-2 items-stretch flex-wrap">
+                <div class="flex-1 min-w-[150px]">
                   <input
                     type="text"
                     id="searchStreet"
-                    class="form-control rounded-3 focus-ring"
+                    class="w-full px-3 py-2 bg-background/70 backdrop-blur-sm border border-border rounded-xl focus:ring-2 focus:ring-primary focus:border-primary shadow-sm"
                     placeholder="Street"
                     [value]="addressSearch().street"
                     (input)="onSearchInput($event, 'street')"
                     required
                   />
                 </div>
-                <div
-                  class="flex-md-grow-0"
-                  style="flex: 0 0 80px; min-width: 70px"
-                >
+                <div class="flex-none w-20 min-w-[70px]">
                   <input
                     type="text"
                     id="searchHouseNumber"
-                    class="form-control rounded-3 focus-ring"
+                    class="w-full px-3 py-2 bg-background/70 backdrop-blur-sm border border-border rounded-xl focus:ring-2 focus:ring-primary focus:border-primary shadow-sm"
                     placeholder="No."
                     [value]="addressSearch().houseNumber"
                     (input)="onSearchInput($event, 'houseNumber')"
                     required
                   />
                 </div>
-                <div class="flex-fill" style="min-width: 120px">
+                <div class="flex-1 min-w-[120px]">
                   <input
                     type="text"
                     id="searchCity"
-                    class="form-control rounded-3 focus-ring"
+                    class="w-full px-3 py-2 bg-background/70 backdrop-blur-sm border border-border rounded-xl focus:ring-2 focus:ring-primary focus:border-primary shadow-sm"
                     placeholder="City"
                     [value]="addressSearch().city"
                     (input)="onSearchInput($event, 'city')"
                     required
                   />
                 </div>
-                <div
-                  class="flex-md-grow-0"
-                  style="flex: 0 0 80px; min-width: 70px"
-                >
+                <div class="flex-none w-20 min-w-[70px]">
                   <input
                     type="text"
                     id="searchZipCode"
-                    class="form-control rounded-3 focus-ring"
+                    class="w-full px-3 py-2 bg-background/70 backdrop-blur-sm border border-border rounded-xl focus:ring-2 focus:ring-primary focus:border-primary shadow-sm"
                     placeholder="ZIP"
                     [value]="addressSearch().zipCode"
                     (input)="onSearchInput($event, 'zipCode')"
@@ -61,13 +53,12 @@
                     required
                   />
                 </div>
-                <div
-                  class="flex-md-grow-0"
-                  style="flex: 0 0 44px; min-width: 44px"
-                >
+                <div class="flex-none w-11 min-w-[44px]">
                   <button
+                    hlmBtn
                     type="submit"
-                    class="btn btn-primary w-100 h-100 rounded-3 hover-lift"
+                    variant="default"
+                    size="icon"
                     [disabled]="!isSearchFormValid()"
                     title="Search"
                   >
@@ -78,34 +69,31 @@
             </form>
           </div>
 
-          <div class="col-lg-4 d-flex align-items-center justify-content-end">
-            <div class="d-flex align-items-center gap-3">
+          <div class="flex items-center justify-end lg:w-1/3">
+            <div class="flex items-center gap-3">
               <!-- Share Button -->
               @if (!isLoading()) {
               <button
-                class="btn btn-outline-primary rounded-pill hover-lift"
+                hlmBtn
+                variant="outline"
+                size="sm"
                 (click)="shareQuery()"
                 title="Share this search"
                 [disabled]="isLoading() || !isShareable() || !state.query()"
               >
-                <fa-icon [icon]="faShareAlt" class="pe-1"></fa-icon>
+                <fa-icon [icon]="faShareAlt" class="mr-1"></fa-icon>
                 Share
               </button>
               }
 
               <!-- Results Count -->
               @if (isLoading()) {
-              <div class="d-flex align-items-center text-muted">
-                <div
-                  class="spinner-border spinner-border-sm me-2"
-                  role="status"
-                >
-                  <span class="visually-hidden fs-6">Loading...</span>
-                </div>
+              <div class="flex items-center text-muted-foreground">
+                <div class="animate-spin rounded-full h-4 w-4 border-b-2 border-muted-foreground mr-2"></div>
                 <small>Searching...</small>
               </div>
               } @else {
-              <span class="badge bg-success rounded-pill p-2 fs-6">
+              <span class="bg-secondary text-secondary-foreground px-3 py-1 rounded-full text-sm font-medium backdrop-blur-sm shadow-sm">
                 {{ filteredOffers().length }} offers
               </span>
               }
@@ -115,37 +103,88 @@
       </div>
 
       <!-- Filter Section -->
-      <div class="pb-3 border-top border-light">
+      <div class="pb-3 border-t border-border">
         <div class="pt-3">
-          <div class="d-flex align-items-center gap-2 gap-md-3 flex-wrap">
-            <select
-              class="form-select form-select-sm rounded-2 flex-shrink-0 focus-ring"
-              [(ngModel)]="filter().provider"
-              (ngModelChange)="updateFilter('provider', $event)"
-              style="width: auto; min-width: 140px"
-            >
-              <option value="" selected>All Providers</option>
-              @for (provider of availableProviders(); track provider) {
-              <option [value]="provider">{{ provider }}</option>
-              }
-            </select>
+          <div class="flex items-center gap-2 md:gap-3 flex-wrap">
+            <!-- Provider Dropdown -->
+            <div class="relative min-w-[140px]">
+              <button
+                class="px-3 py-1.5 bg-background/70 backdrop-blur-sm border border-border rounded-xl text-sm focus:ring-2 focus:ring-primary focus:border-primary min-w-[140px] shadow-sm flex items-center justify-between w-full hover:bg-background/80 transition-colors"
+                [class.text-muted-foreground]="!filter().provider"
+                [brnMenuTriggerFor]="providerMenu"
+              >
+                <span class="truncate">{{ filter().provider || 'All Providers' }}</span>
+                <fa-icon [icon]="faChevronDown" class="ml-2 h-4 w-4 opacity-60"></fa-icon>
+              </button>
 
-            <select
-              class="form-select form-select-sm rounded-2 flex-shrink-0 focus-ring"
-              [(ngModel)]="filter().connectionType"
-              (ngModelChange)="updateFilter('connectionType', $event)"
-              style="width: auto; min-width: 140px"
-            >
-              <option value="" selected>All Types</option>
-              @for (type of availableConnectionTypes(); track type) {
-              <option [value]="type">{{ type }}</option>
-              }
-            </select>
+              <ng-template #providerMenu>
+                <hlm-menu class="w-[var(--radix-popper-anchor-width)]">
+                  @if (filter().provider) {
+                  <button
+                    hlmMenuItem
+                    (click)="updateFilter('provider', '')"
+                    class="text-muted-foreground italic"
+                  >
+                    All Providers
+                  </button>
+                  <hlm-menu-separator></hlm-menu-separator>
+                  }
+                  
+                  @for (provider of availableProviders(); track provider) {
+                  <button
+                    hlmMenuItem
+                    (click)="updateFilter('provider', provider)"
+                    [class.bg-accent]="filter().provider === provider"
+                    [class.text-accent-foreground]="filter().provider === provider"
+                  >
+                    {{ provider }}
+                  </button>
+                  }
+                </hlm-menu>
+              </ng-template>
+            </div>
+
+            <!-- Connection Type Dropdown -->
+            <div class="relative min-w-[140px]">
+              <button
+                class="px-3 py-1.5 bg-background/70 backdrop-blur-sm border border-border rounded-xl text-sm focus:ring-2 focus:ring-primary focus:border-primary min-w-[140px] shadow-sm flex items-center justify-between w-full hover:bg-background/80 transition-colors"
+                [class.text-muted-foreground]="!filter().connectionType"
+                [brnMenuTriggerFor]="connectionTypeMenu"
+              >
+                <span class="truncate">{{ filter().connectionType || 'All Types' }}</span>
+                <fa-icon [icon]="faChevronDown" class="ml-2 h-4 w-4 opacity-60"></fa-icon>
+              </button>
+
+              <ng-template #connectionTypeMenu>
+                <hlm-menu class="w-[var(--radix-popper-anchor-width)]">
+                  @if (filter().connectionType) {
+                  <button
+                    hlmMenuItem
+                    (click)="updateFilter('connectionType', '')"
+                    class="text-muted-foreground italic"
+                  >
+                    All Types
+                  </button>
+                  <hlm-menu-separator></hlm-menu-separator>
+                  }
+                  
+                  @for (type of availableConnectionTypes(); track type) {
+                  <button
+                    hlmMenuItem
+                    (click)="updateFilter('connectionType', type)"
+                    [class.bg-accent]="filter().connectionType === type"
+                    [class.text-accent-foreground]="filter().connectionType === type"
+                  >
+                    {{ type }}
+                  </button>
+                  }
+                </hlm-menu>
+              </ng-template>
+            </div>
 
             <input
               type="number"
-              class="form-control form-control-sm rounded-2 flex-shrink-0 focus-ring"
-              style="width: 140px"
+              class="px-3 py-1.5 bg-background/70 backdrop-blur-sm border border-border rounded-xl text-sm focus:ring-2 focus:ring-primary focus:border-primary w-[140px] shadow-sm"
               [(ngModel)]="filter().speedMin"
               (ngModelChange)="updateFilter('speedMin', $event)"
               placeholder="Min Speed (Mbps)"
@@ -154,17 +193,16 @@
 
             <input
               type="number"
-              class="form-control form-control-sm rounded-2 flex-shrink-0 focus-ring"
-              style="width: 140px"
+              class="px-3 py-1.5 bg-background/70 backdrop-blur-sm border border-border rounded-xl text-sm focus:ring-2 focus:ring-primary focus:border-primary w-[140px] shadow-sm"
               [(ngModel)]="filter().costMax"
               (ngModelChange)="updateFilter('costMax', $event)"
               placeholder="Max Cost (€)"
               min="0"
             />
 
-            <div class="form-check form-switch">
+            <div class="flex items-center">
               <input
-                class="form-check-input"
+                class="h-4 w-4 text-primary focus:ring-primary border-border rounded"
                 type="checkbox"
                 role="switch"
                 id="requireInstallation"
@@ -172,7 +210,7 @@
                 (ngModelChange)="updateFilter('installation', $event)"
               />
               <label
-                class="form-check-label fw-medium"
+                class="ml-2 text-sm font-medium text-foreground"
                 for="requireInstallation"
               >
                 Installation
@@ -180,41 +218,68 @@
             </div>
 
             <!-- Sort Dropdown -->
-            <div class="d-flex align-items-center gap-2 ms-auto">
-              <small class="text-muted fw-medium">Sort by:</small>
-              <select
-                class="form-select form-select-sm rounded-2 flex-shrink-0 focus-ring"
-                [value]="sortOption()"
-                (change)="updateSort($event)"
-                style="width: auto; min-width: 160px"
-              >
-                <option value="">Default</option>
-                @for (option of sortOptions; track option.value) {
-                <option [value]="option.value">{{ option.label }}</option>
-                }
-              </select>
+            <div class="flex items-center gap-2 ml-auto">
+              <small class="text-muted-foreground font-medium">Sort by:</small>
+              <div class="relative min-w-[160px]">
+                <button
+                  class="px-3 py-1.5 bg-background/70 backdrop-blur-sm border border-border rounded-xl text-sm focus:ring-2 focus:ring-primary focus:border-primary min-w-[160px] shadow-sm flex items-center justify-between w-full hover:bg-background/80 transition-colors"
+                  [class.text-muted-foreground]="!sortOption()"
+                  [brnMenuTriggerFor]="sortMenu"
+                >
+                  <span class="truncate">{{ getSortOptionLabel() || 'Default' }}</span>
+                  <fa-icon [icon]="faChevronDown" class="ml-2 h-4 w-4 opacity-60"></fa-icon>
+                </button>
+
+                <ng-template #sortMenu>
+                  <hlm-menu class="w-[var(--radix-popper-anchor-width)]">
+                    <button
+                      hlmMenuItem
+                      (click)="sortOption.set('')"
+                      [class.bg-accent]="!sortOption()"
+                      [class.text-accent-foreground]="!sortOption()"
+                    >
+                      Default
+                    </button>
+                    <hlm-menu-separator></hlm-menu-separator>
+                    
+                    @for (option of sortOptions; track option.value) {
+                    <button
+                      hlmMenuItem
+                      (click)="setSortOption(option.value)"
+                      [class.bg-accent]="sortOption() === option.value"
+                      [class.text-accent-foreground]="sortOption() === option.value"
+                    >
+                      {{ option.label }}
+                    </button>
+                    }
+                  </hlm-menu>
+                </ng-template>
+              </div>
             </div>
           </div>
 
           <!-- Active Filters -->
           @if (activeFilters().length > 0) {
-          <div class="d-flex align-items-center gap-2 flex-wrap mt-3">
+          <div class="flex items-center gap-2 flex-wrap mt-3">
             @for (filter of activeFilters(); track filter.type) {
             <span
-              class="badge bg-primary bg-opacity-10 text-primary border border-primary rounded-pill d-flex align-items-center gap-1 p-2"
+              class="bg-background/80 text-foreground border border-border rounded-full flex items-center gap-1 px-3 py-1 backdrop-blur-sm shadow-sm"
             >
-              <small class="fw-medium">{{ filter.label }}</small>
+              <small class="font-medium">{{ filter.label }}</small>
               <button
                 type="button"
-                class="btn-close"
-                style="font-size: 0.6rem"
+                class="ml-1 text-muted-foreground hover:text-foreground transition-colors"
                 (click)="removeFilter(filter.type)"
                 aria-label="Remove filter"
-              ></button>
+              >
+                ×
+              </button>
             </span>
             }
             <button
-              class="btn btn-sm btn-outline-danger rounded-pill hover-lift"
+              hlmBtn
+              variant="destructive"
+              size="sm"
               (click)="clearFilters()"
             >
               <fa-icon [icon]="faClose"></fa-icon>
@@ -227,38 +292,35 @@
     </div>
   </div>
 
-  <div class="container pt-4">
+  <div class="max-w-7xl mx-auto px-4 pt-6">
     <!-- Loading State -->
     @if (isLoading() && filteredOffers().length === 0) {
-    <div class="text-center py-5">
-      <div class="d-flex justify-content-center mb-4">
-        <div
-          class="spinner-border text-primary"
-          role="status"
-          style="width: 3rem; height: 3rem"
-        >
-          <span class="visually-hidden">Loading...</span>
-        </div>
+    <div class="text-center py-12">
+      <div class="flex justify-center mb-4">
+        <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
       </div>
-      <h4 class="text-muted mb-2">
+      <h4 class="text-muted-foreground mb-2 text-lg font-semibold">
         Fetching offers from multiple providers...
       </h4>
-      <p class="text-muted">This may take a few moments</p>
+      <p class="text-muted-foreground">This may take a few moments</p>
     </div>
     }
 
     <!-- Error State -->
     @if (error(); as error) {
-    <div class="alert alert-danger border-0 shadow-sm text-center" role="alert">
-      <div class="mb-3">
-        <fa-icon [icon]="faExclamationTriangle" class="text-danger"></fa-icon>
-
-        <i class="fas fa-exclamation-triangle fa-2x text-danger"></i>
+    <div class="bg-background/80 backdrop-blur-sm border border-destructive/20 rounded-2xl p-8 text-center shadow-sm">
+      <div class="mb-4">
+        <fa-icon [icon]="faExclamationTriangle" class="text-destructive text-3xl"></fa-icon>
       </div>
-      <h4 class="alert-heading">Error Loading Offers</h4>
-      <p class="mb-3">{{ error }}</p>
-      <button class="btn btn-danger hover-lift" (click)="retrySearch()">
-        <fa-icon [icon]="faRedo"></fa-icon>
+      <h4 class="text-destructive text-xl font-semibold mb-3">Error Loading Offers</h4>
+      <p class="text-destructive/80 mb-4">{{ error }}</p>
+      <button 
+        hlmBtn
+        variant="destructive"
+        size="lg"
+        (click)="retrySearch()"
+      >
+        <fa-icon [icon]="faRedo" class="mr-2"></fa-icon>
         Try Again
       </button>
     </div>
@@ -266,24 +328,31 @@
 
     <!-- Results -->
     @if (filteredOffers().length > 0) {
-    <div class="d-flex flex-column gap-3">
+    <div class="flex flex-col gap-4">
       @for (offer of filteredOffers(); track offer.offerHash) {
       <app-offer-card [offer]="offer"></app-offer-card>
       }
     </div>
     } @else if (!isLoading() && !error()) {
-    <div class="text-center py-5">
-      <div class="mb-4">
-        <i class="fas fa-search fa-3x text-muted"></i>
+    <div class="text-center py-12">
+      <div class="bg-background/80 backdrop-blur-sm rounded-2xl p-8 shadow-sm">
+        <div class="mb-6">
+          <fa-icon [icon]="faSearch" class="mx-auto h-16 w-16 text-muted-foreground text-4xl"></fa-icon>
+        </div>
+        <h4 class="text-muted-foreground mb-3 text-xl font-semibold">No offers found</h4>
+        <p class="text-muted-foreground mb-6">
+          Try adjusting your filters or search criteria.
+        </p>
+        <button 
+          hlmBtn
+          variant="default"
+          size="lg"
+          (click)="clearFilters()"
+        >
+          <fa-icon [icon]="faFilter" class="mr-2"></fa-icon>
+          Clear Filters
+        </button>
       </div>
-      <h4 class="text-muted mb-2">No offers found</h4>
-      <p class="text-muted mb-4">
-        Try adjusting your filters or search criteria.
-      </p>
-      <button class="btn btn-primary hover-lift" (click)="clearFilters()">
-        <i class="fas fa-filter me-1"></i>
-        Clear Filters
-      </button>
     </div>
     }
   </div>

@@ -1,6 +1,7 @@
 import { Component, signal, effect, input, output, OnDestroy, HostListener } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
+import { HlmButtonDirective } from '@spartan-ng/helm/button';
 import {
   faClose,
   faCopy,
@@ -14,7 +15,7 @@ import { State } from '../../services/state';
 
 @Component({
   selector: 'app-share-dialog',
-  imports: [CommonModule, FontAwesomeModule],
+  imports: [CommonModule, FontAwesomeModule, HlmButtonDirective],
   templateUrl: './share-dialog.component.html',
   styleUrl: './share-dialog.component.css',
   standalone: true,
@@ -61,11 +62,6 @@ export class ShareDialogComponent implements OnDestroy {
     sessionId: string,
     filters?: FilterOptions
   ) {
-    console.log(
-      `Generating share link for queryHash: ${queryHash}, sessionId: ${sessionId}, filters: ${JSON.stringify(
-        filters
-      )}`
-    );
     this.isGeneratingLink.set(true);
     this.error.set(null);
     this.linkCopied.set(false);

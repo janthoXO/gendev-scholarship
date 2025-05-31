@@ -1,25 +1,25 @@
-<div class="card shadow-sm border rounded-4 offer-card hover-lift" [class.preliminary]="offer().isPreliminary">
-  <div class="card-body p-lg-4 p-md-3 p-2">
-    <div class="row align-items-center">
+<div class="bg-background/80 backdrop-blur-sm border border-border rounded-2xl shadow-sm hover:shadow-md transition-all duration-200 hover:-translate-y-1" [class.opacity-75]="offer().isPreliminary">
+  <div class="p-6">
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-4 items-center">
       <!-- Provider Info Column -->
-      <div class="col-lg-3 col-md-4 mb-3 mb-md-0">
-        <div class="d-flex align-items-center">
+      <div class="lg:col-span-3 md:col-span-4">
+        <div class="flex items-center space-x-3">
           @if (hasProviderLogo(offer().provider)) {
           <img 
             [src]="getProviderLogo(offer().provider)!" 
             [alt]="offer().provider + ' logo'"
-            class="img-thumbnail w-25 h-25 me-3 rounded-3 bg-light p-1"
+            class="w-12 h-12 rounded-lg border border-border bg-muted object-cover"
           />
           } @else {
-          <div class="d-flex align-items-center justify-content-center img-thumbnail w-25 h-25 me-3 rounded-3 bg-light p-1">
-            <fa-icon [icon]="faGlobe" class="text-muted fs-5"></fa-icon>
+          <div class="w-12 h-12 rounded-lg border border-border bg-muted flex items-center justify-center">
+            <fa-icon [icon]="faGlobe" class="text-muted-foreground text-lg"></fa-icon>
           </div>
           }
-          <div>
-            <h6 class="fw-bold mb-0 d-none d-lg-block text-dark">{{ offer().provider }}</h6>
-            <p class="text-secondary small mb-1 fw-medium text-uppercase opacity-75 lh-1">{{ offer().productName }}</p>
+          <div class="min-w-0 flex-1">
+            <h6 class="font-semibold text-sm text-foreground hidden lg:block truncate">{{ offer().provider }}</h6>
+            <p class="text-xs text-muted-foreground font-medium uppercase tracking-wide">{{ offer().productName }}</p>
             @if (offer().isPreliminary) {
-            <span class="badge rounded-pill text-bg-warning border px-2 py-1 small text-uppercase fw-semibold">
+            <span hlmBadge variant="outline" class="mt-1">
               Cached
             </span>
             }
@@ -28,55 +28,45 @@
       </div>
 
       <!-- Specifications Column -->
-      <div class="col-lg-4 col-md-4 mb-3 mb-md-0">
-        <div class="row g-2">
-          <div class="col-6">
-            <div class="d-flex flex-column">
-              <span class="text-secondary small fw-medium text-uppercase opacity-75 lh-1">Speed</span>
-              <span class="fw-semibold text-dark">{{ offer().speed }} Mbps</span>
-            </div>
+      <div class="lg:col-span-4 md:col-span-4">
+        <div class="grid grid-cols-2 gap-3">
+          <div class="space-y-1">
+            <span class="text-xs text-muted-foreground font-medium uppercase tracking-wide">Speed </span>
+            <span class="text-sm font-semibold text-foreground">{{ offer().speed }} Mbps</span>
           </div>
-          <div class="col-6">
-            <div class="d-flex flex-column">
-              <span class="text-secondary small fw-medium text-uppercase opacity-75 lh-1">Connection</span>
-              <span class="fw-semibold text-dark">{{ offer().connectionType }}</span>
-            </div>
+          <div class="space-y-1">
+            <span class="text-xs text-muted-foreground font-medium uppercase tracking-wide">Connection </span>
+            <span class="text-sm font-semibold text-foreground">{{ offer().connectionType }}</span>
           </div>
-          <div class="col-6">
-            <div class="d-flex flex-column">
-              <span class="text-secondary small fw-medium text-uppercase opacity-75 lh-1">Contract</span>
-              <span class="fw-semibold text-dark">{{ offer().contractDurationInMonths }} months</span>
-            </div>
+          <div class="space-y-1">
+            <span class="text-xs text-muted-foreground font-medium uppercase tracking-wide">Contract </span>
+            <span class="text-sm font-semibold text-foreground">{{ offer().contractDurationInMonths }} months</span>
           </div>
           @if (offer().limitInGb) {
-          <div class="col-6">
-            <div class="d-flex flex-column">
-              <span class="text-secondary small fw-medium text-uppercase opacity-75 lh-1">Data Limit</span>
-              <span class="fw-semibold text-dark">{{ offer().limitInGb }} GB</span>
-            </div>
+          <div class="space-y-1">
+            <span class="text-xs text-muted-foreground font-medium uppercase tracking-wide">Data Limit </span>
+            <span class="text-sm font-semibold text-foreground">{{ offer().limitInGb }} GB</span>
           </div>
           }
           @if (offer().tv) {
-          <div class="col-12">
-            <div class="d-flex flex-column">
-              <span class="text-secondary small fw-medium text-uppercase opacity-75 lh-1">TV</span>
-              <span class="fw-semibold text-dark">{{ offer().tv }}</span>
-            </div>
+          <div class="col-span-2 space-y-1">
+            <span class="text-xs text-muted-foreground font-medium uppercase tracking-wide">TV </span>
+            <span class="text-sm font-semibold text-foreground">{{ offer().tv }}</span>
           </div>
           }
         </div>
       </div>
 
       <!-- Features Column -->
-      <div class="col-lg-2 col-md-12">
-        <div class="d-flex flex-wrap gap-1 justify-content-lg-end justify-content-md-start">
+      <div class="lg:col-span-2 md:col-span-12">
+        <div class="flex flex-wrap gap-2 lg:justify-end md:justify-start">
           @if (offer().installationService) {
-          <span class="badge rounded-pill text-bg-primary border px-2 py-1 small text-uppercase fw-semibold">
+          <span hlmBadge variant="default">
             Installation included
           </span>
           }
           @if (offer().maxAgePerson) {
-          <span class="badge rounded-pill text-bg-light border px-2 py-1 small text-uppercase fw-semibold">
+          <span hlmBadge variant="secondary">
             Max Age: {{ offer().maxAgePerson }}
           </span>
           }
@@ -84,28 +74,28 @@
       </div>
 
       <!-- Pricing Column -->
-      <div class="col-lg-3 col-md-4 mb-3 mb-md-0">
-        <div class="text-center">
-          <div class="mb-2">
-            <span class="h4 fw-bold mb-0 text-primary">€{{ (offer().monthlyCostInCent / 100).toFixed(2) }}</span>
-            <span class="text-secondary small opacity-75">/month</span>
+      <div class="lg:col-span-3 md:col-span-4">
+        <div class="text-center space-y-2">
+          <div>
+            <span class="text-2xl font-bold text-primary">€{{ (offer().monthlyCostInCent / 100).toFixed(2) }}</span>
+            <span class="text-sm text-muted-foreground">/month</span>
           </div>
           
           @if (offer().afterTwoYearsMonthlyCost && offer().afterTwoYearsMonthlyCost !== offer().monthlyCostInCent) {
-          <div class="mb-2">
-            <span class="text-secondary small opacity-75">After 2 years: </span>
-            <span class="fw-semibold text-dark">€{{ (offer().afterTwoYearsMonthlyCost! / 100).toFixed(2) }}</span>
+          <div>
+            <span class="text-xs text-muted-foreground">After 2 years: </span>
+            <span class="text-sm font-semibold text-foreground">€{{ (offer().afterTwoYearsMonthlyCost! / 100).toFixed(2) }}</span>
           </div>
           }
           
           @if (offer().voucherType && offer().voucherValue) {
-          <div class="badge rounded-pill text-bg-success border px-2 py-1 small text-uppercase fw-semibold">
+          <span hlmBadge variant="secondary">
             @if (offer().voucherType === 'percentage') {
             {{ offer().voucherValue }}% off
             } @else {
             €{{ (offer().voucherValue! / 100).toFixed(2) }} off
             }
-          </div>
+          </span>
           }
         </div>
       </div>

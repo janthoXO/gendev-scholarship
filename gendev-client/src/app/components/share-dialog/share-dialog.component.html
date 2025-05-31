@@ -1,87 +1,92 @@
-<!-- Bootstrap Modal -->
+<!-- Modal Dialog -->
 @if (show()) {
-<div class="modal fade show d-block" tabindex="-1" role="dialog" aria-labelledby="shareModalLabel" (click)="closeDialog()">
-  <div class="modal-dialog modal-dialog-centered" role="document" (click)="$event.stopPropagation()">
-    <div class="modal-content border-0 shadow-lg">
-      <!-- Header -->
-      <div class="modal-header border-bottom">
-        <h5 class="modal-title fw-semibold" id="shareModalLabel">Share Search Results</h5>
-        <button
-          type="button"
-          class="btn-close"
-          (click)="closeDialog()"
-          aria-label="Close"
-        ></button>
+<!-- Modal backdrop -->
+<div class="fixed inset-0 z-40"></div>
+<div class="fixed inset-0 z-50 flex items-center justify-center" tabindex="-1" role="dialog" aria-labelledby="shareModalLabel" (click)="closeDialog()">
+  <div class="relative bg-background rounded-xl shadow-2xl max-w-md w-full mx-4" role="document" (click)="$event.stopPropagation()">
+    <!-- Header -->
+    <div class="px-6 py-4 border-b border-border">
+      <h5 class="text-lg font-semibold text-foreground" id="shareModalLabel">Share Search Results</h5>
+      <button
+        type="button"
+        class="absolute top-4 right-4 text-muted-foreground hover:text-foreground w-6 h-6 flex items-center justify-center"
+        (click)="closeDialog()"
+        aria-label="Close"
+      >
+        <fa-icon [icon]="faClose" class="w-4 h-4"></fa-icon>
+      </button>
+    </div>
+
+    <!-- Body -->
+    <div class="px-6 py-4">
+      @if (isGeneratingLink()) {
+      <!-- Loading State -->
+      <div class="text-center py-8">
+        <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
+        <p class="text-muted-foreground">Generating share link...</p>
       </div>
-
-      <!-- Body -->
-      <div class="modal-body">
-        @if (isGeneratingLink()) {
-        <!-- Loading State -->
-        <div class="text-center py-4">
-          <fa-icon [icon]="faSpinner" class="fa-spin text-primary fs-3 mb-3"></fa-icon>
-          <p class="text-muted mb-0">Generating share link...</p>
-        </div>
-        } @else if (error()) {
-        <!-- Error State -->
-        <div class="alert alert-danger d-flex align-items-center" role="alert">
-          <fa-icon [icon]="faExclamationTriangle" class="me-2"></fa-icon>
-          <div class="flex-grow-1">{{ error() }}</div>
-          <button
-            type="button"
-            class="btn btn-sm btn-outline-danger ms-2"
-            (click)="retryGeneration()"
-          >
-            Retry
-          </button>
-        </div>
-        } @else if (shareLink()) {
-        <!-- Success State -->
-        <p class="text-muted mb-3">
-          Share this link to let others view your search results with the same filters:
-        </p>
-        
-        <div class="input-group">
-          <input
-            type="text"
-            class="form-control font-monospace bg-light"
-            [value]="shareLink()"
-            readonly
-            #linkInput
-          />
-          <button
-            type="button"
-            class="btn btn-primary"
-            [class.btn-success]="linkCopied()"
-            (click)="copyShareLink()"
-            title="Copy to clipboard"
-          >
-            <fa-icon [icon]="linkCopied() ? faCheck : faCopy"></fa-icon>
-          </button>
-        </div>
-
-        @if (linkCopied()) {
-        <div class="alert alert-success mt-3 mb-0 py-2" role="alert">
-          <fa-icon [icon]="faCheck" class="me-1"></fa-icon>
-          Link copied to clipboard!
-        </div>
-        }
-        }
-      </div>
-
-      <!-- Footer -->
-      <div class="modal-footer border-top">
+      } @else if (error()) {
+      <!-- Error State -->
+      <div class="bg-destructive/10 border border-destructive/20 rounded-lg p-4 flex items-center" role="alert">
+        <fa-icon [icon]="faExclamationTriangle" class="text-destructive mr-3"></fa-icon>
+        <div class="flex-1 text-destructive">{{ error() }}</div>
         <button
+          hlmBtn
           type="button"
-          class="btn btn-secondary"
-          (click)="closeDialog()"
+          variant="outline"
+          size="sm"
+          (click)="retryGeneration()"
         >
-          Close
+          Retry
         </button>
       </div>
+      } @else if (shareLink()) {
+      <!-- Success State -->
+      <p class="text-muted-foreground mb-4">
+        Share this link to let others view your search results with the same filters:
+      </p>
+      
+      <div class="flex rounded-lg border border-border overflow-hidden">
+        <input
+          type="text"
+          class="flex-1 px-3 py-2 font-mono text-sm bg-muted border-0 focus:outline-none"
+          [value]="shareLink()"
+          readonly
+          #linkInput
+        />
+        <button
+          hlmBtn
+          type="button"
+          variant="default"
+          size="sm"
+          (click)="copyShareLink()"
+          title="Copy to clipboard"
+        >
+          <fa-icon [icon]="linkCopied() ? faCheck : faCopy"></fa-icon>
+        </button>
+      </div>
+
+      @if (linkCopied()) {
+      <div class="bg-primary/10 border border-primary/20 rounded-lg p-3 mt-3 text-primary" role="alert">
+        <fa-icon [icon]="faCheck" class="mr-2"></fa-icon>
+        Link copied to clipboard!
+      </div>
+      }
+      }
+    </div>
+
+    <!-- Footer -->
+    <div class="px-6 py-4 border-t border-border">
+      <button
+        hlmBtn
+        type="button"
+        variant="secondary"
+        class="w-full"
+        (click)="closeDialog()"
+      >
+        Close
+      </button>
     </div>
   </div>
 </div>
-<!-- Modal backdrop -->
-<div class="modal-backdrop fade show"></div>
 }

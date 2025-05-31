@@ -5,5 +5,5 @@
 }
 
 .offer-card.preliminary {
-  border-left: 0.3rem solid var(--bs-warning) !important;
+  border-left: 0.3rem solid hsl(var(--accent)) !important;
 }

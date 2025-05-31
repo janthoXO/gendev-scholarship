@@ -3,11 +3,12 @@ import { CommonModule } from '@angular/common';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { faGlobe } from '@fortawesome/free-solid-svg-icons';
 import { Offer } from '../../models/offer.model';
+import { HlmBadgeDirective } from '@spartan-ng/helm/badge';
 
 @Component({
   selector: 'app-offer-card',
   standalone: true,
-  imports: [CommonModule, FontAwesomeModule],
+  imports: [CommonModule, FontAwesomeModule, HlmBadgeDirective],
   templateUrl: './offer-card.component.html',
   styleUrl: './offer-card.component.css'
 })

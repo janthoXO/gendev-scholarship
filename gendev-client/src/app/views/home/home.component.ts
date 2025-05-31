@@ -29,6 +29,8 @@ export class HomeComponent {
         city: address.city,
         zipCode: address.zipCode
       }
+    }).catch(error => {
+      console.error('Navigation error:', error);
     });
   }
 }

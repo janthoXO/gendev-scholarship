@@ -8,12 +8,21 @@ import { SearchService } from '../../services/search.service';
 import { OfferCardComponent } from '../../components/offer-card/offer-card.component';
 import { ShareDialogComponent } from '../../components/share-dialog/share-dialog.component';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
+import { BrnMenuTriggerDirective } from '@spartan-ng/brain/menu';
+import {
+  HlmMenuComponent,
+  HlmMenuItemDirective,
+  HlmMenuSeparatorComponent,
+} from '@spartan-ng/helm/menu';
+import { HlmButtonDirective } from '@spartan-ng/helm/button';
 import {
   faSearch,
   faShareAlt,
   faClose,
   faRedo,
   faExclamationTriangle,
+  faChevronDown,
+  faFilter,
 } from '@fortawesome/free-solid-svg-icons';
 import {
   filterOffer,
@@ -34,6 +43,11 @@ import {
     FontAwesomeModule,
     OfferCardComponent,
     ShareDialogComponent,
+    BrnMenuTriggerDirective,
+    HlmMenuComponent,
+    HlmMenuItemDirective,
+    HlmMenuSeparatorComponent,
+    HlmButtonDirective,
   ],
   templateUrl: './offer-results.component.html',
   styleUrl: './offer-results.component.css',
@@ -45,6 +59,8 @@ export class OfferResultsComponent {
   protected faClose = faClose;
   protected faRedo = faRedo;
   protected faExclamationTriangle = faExclamationTriangle;
+  protected faChevronDown = faChevronDown;
+  protected faFilter = faFilter;
 
   // Available sort options
   sortOptions = SORT_OPTIONS;
@@ -167,6 +183,18 @@ export class OfferResultsComponent {
 
     return filters;
   });
+
+  getSortOptionLabel(): string {
+    const currentSortValue = this.sortOption();
+    if (!currentSortValue) return 'Default';
+    
+    const option = this.sortOptions.find(opt => opt.value === currentSortValue);
+    return option?.label || 'Default';
+  }
+
+  setSortOption(value: string) {
+    this.sortOption.set(value as SortOptionValue);
+  }
 
   constructor(
     private router: Router,

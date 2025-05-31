@@ -1,29 +1,14 @@
-/* Minimal custom styles - using Bootstrap 5.3 modal and utilities */
+/* Share dialog component styles */
+/* The modal uses Tailwind CSS classes for layout and styling */
 
-/* Modal backdrop blur enhancement (not available in Bootstrap) */
+/* Additional backdrop blur effect */
 .modal-backdrop {
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
 }
 
-/* Ensure modal takes full viewport and prevents scrolling */
-.modal {
-  position: fixed !important;
-  top: 0 !important;
-  left: 0 !important;
-  width: 100% !important;
-  height: 100% !important;
-  overflow-x: hidden !important;
-  overflow-y: auto !important;
-}
-
-/* Enhanced modal appearance */
-.modal-content {
-  border-radius: 12px !important;
-}
-
 /* Subtle animation for success alert */
-.alert-success {
+.success-alert {
   animation: slideDown 0.3s ease-out;
 }
 

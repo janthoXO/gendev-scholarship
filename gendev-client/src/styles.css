@@ -1,60 +1,85 @@
+@import '@angular/cdk/overlay-prebuilt.css';
+
 /* You can add global styles to this file, and also import other style files */
 
-/* Import Bootstrap */
-@import 'bootstrap/dist/css/bootstrap.min.css';
+/* Import Tailwind */
+@import "tailwindcss";
+/* Import spartan ui */
+@import '@spartan-ng/brain/hlm-tailwind-preset.css';
+
 
 /* Global styles */
 * {
-  box-sizing: border-box;
+box-sizing: border-box;
 }
 
 body {
-  margin: 0;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Helvetica Neue', Arial, sans-serif;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-}
-
-/* Custom utilities */
-.glass-effect {
-  background: rgba(255, 255, 255, 0.95);
-  backdrop-filter: blur(20px);
-  border: 1px solid rgba(255, 255, 255, 0.2);
-}
-
-.gradient-bg {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-}
-
-.btn-gradient {
-  background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
-  border: none;
-  color: white;
-  transition: all 0.3s ease;
-}
-
-.btn-gradient:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 10px 25px rgba(59, 130, 246, 0.3);
-  color: white;
-}
-
-.btn-gradient:disabled {
-  background: #6c757d;
-  transform: none;
-  box-shadow: none;
-}
-
-.card-hover {
-  transition: all 0.3s ease;
-}
-
-.card-hover:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.12);
+margin: 0;
+font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Helvetica Neue', Arial, sans-serif;
+-webkit-font-smoothing: antialiased;
+-moz-osx-font-smoothing: grayscale;
 }
 
 .hover-lift:hover:not(:disabled) {
-  transform: translateY(-0.2rem);
-  transition: transform 0.2s ease;
+transform: translateY(-0.2rem);
+transition: transform 0.2s ease;
+box-shadow: 0 8px 30px rgba(0, 0, 0, 0.12);
+}
+
+:root {
+--font-sans: ''
+}
+
+:root {
+--background: 0 0% 100%;
+--foreground: 0 0% 3.9%;
+--muted: 0 0% 96.1%;
+--muted-foreground: 0 0% 45.1%;
+--popover: 0 0% 100%;
+--popover-foreground: 0 0% 3.9%;
+--card: 0 0% 100%;
+--card-foreground: 0 0% 3.9%;
+--border: 0 0% 89.8%;
+--input: 0 0% 89.8%;
+--primary: 0 0% 9%;
+--primary-foreground: 0 0% 98%;
+--secondary: 0 0% 96.1%;
+--secondary-foreground: 0 0% 9%;
+--accent: 0 0% 96.1%;
+--accent-foreground: 0 0% 9%;
+--destructive: 0 84.2% 60.2%;
+--destructive-foreground: 0 0% 98%;
+--ring: 0 0% 3.9%;
+--radius: 0.5rem;
+color-scheme: light;
+}
+
+.dark {
+--background: 0 0% 3.9%;
+--foreground: 0 0% 98%;
+--muted: 0 0% 14.9%;
+--muted-foreground: 0 0% 63.9%;
+--popover: 0 0% 3.9%;
+--popover-foreground: 0 0% 98%;
+--card: 0 0% 3.9%;
+--card-foreground: 0 0% 98%;
+--border: 0 0% 14.9%;
+--input: 0 0% 14.9%;
+--primary: 0 0% 98%;
+--primary-foreground: 0 0% 9%;
+--secondary: 0 0% 14.9%;
+--secondary-foreground: 0 0% 98%;
+--accent: 0 0% 14.9%;
+--accent-foreground: 0 0% 98%;
+--destructive: 0 62.8% 30.6%;
+--destructive-foreground: 0 0% 98%;
+--ring: 0 0% 83.1%;
+color-scheme: dark;
+}
+
+
+@layer base {
+* {
+@apply border-border;
+}
 }

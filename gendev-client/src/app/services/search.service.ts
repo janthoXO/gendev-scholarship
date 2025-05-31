@@ -41,7 +41,6 @@ export class SearchService {
           reader.read().then(
             (read = (result: any) => {
               if (result.done) {
-                console.log('Stream completed');
                 observer.complete();
                 return;
               }
@@ -127,7 +126,6 @@ export class SearchService {
           reader.read().then(
             (read = (result: any) => {
               if (result.done) {
-                console.log('Stream completed');
                 observer.complete();
                 return;
               }

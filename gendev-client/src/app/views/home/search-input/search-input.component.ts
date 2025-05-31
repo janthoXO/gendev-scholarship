@@ -1,16 +1,21 @@
 import { Component, signal, output } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
+import { faSearch } from '@fortawesome/free-solid-svg-icons';
 import { Address } from '../../../models/address.model';
+import { HlmInputDirective } from '@spartan-ng/helm/input';
+import { HlmButtonDirective } from '@spartan-ng/helm/button';
 
 @Component({
   selector: 'app-search-input',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, FontAwesomeModule, HlmInputDirective, HlmButtonDirective],
   templateUrl: './search-input.component.html',
   styleUrl: './search-input.component.css'
 })
 export class SearchInputComponent {
+  protected faSearch = faSearch;
   // Signals for form state
   isExpanded = signal(false);
   street = signal('');

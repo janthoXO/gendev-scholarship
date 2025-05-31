@@ -1,77 +1,77 @@
-<div class="d-flex justify-content-center align-items-center py-5 px-3" style="min-height: 60vh;">
-  <div class="glass-effect shadow-lg position-relative cursor-pointer transition-all"
-       [class]="isExpanded() ? 'p-4 expanded-search rounded-4' : 'py-3 px-4 collapsed-search rounded-pill'"
-       [ngClass]="{'card-hover': !isExpanded()}">
+<div class="flex justify-center items-center py-12 px-4" style="min-height: 60vh;">
+  <div class="bg-card/80 backdrop-blur-sm border border-border/50 shadow-xl relative cursor-pointer transition-all duration-300 ease-out"
+       [class]="isExpanded() ? 'p-8 expanded-search rounded-3xl shadow-2xl' : 'py-4 px-6 collapsed-search rounded-2xl shadow-lg hover:shadow-xl'"
+       [ngClass]="{'hover-lift': !isExpanded()}">
     
-    <div class="text-secondary d-flex align-items-center"
-         [class]="isExpanded() ? 'd-none' : 'position-absolute start-0 top-50 translate-middle-y ms-3'"
+    <div class="text-muted-foreground flex items-center"
+         [class]="isExpanded() ? 'hidden' : 'absolute left-0 top-1/2 -translate-y-1/2 ml-4'"
          (click)="toggleExpanded()">
-      <svg
-        width="20"
-        height="20"
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        class="me-2">
-        <circle cx="11" cy="11" r="8"></circle>
-        <path d="M21 21l-4.35-4.35"></path>
-      </svg>
+      <fa-icon 
+        [icon]="faSearch" 
+        class="mr-3 text-primary/70 text-lg">
+      </fa-icon>
     </div>
 
     @if (isExpanded()) {
-    <form (ngSubmit)="onSubmit()">
-      <div class="mb-3">
+    <form (ngSubmit)="onSubmit()" class="space-y-6">
+      <div class="space-y-4">
         <input
+          hlmInput
           type="text"
           [(ngModel)]="street"
           name="street"
-          placeholder="Street"
-          class="form-control form-control-lg rounded-3"
+          placeholder="Street Address"
+          size="lg"
+          class="w-full rounded-xl border-border/50 bg-background/50 backdrop-blur-sm focus:border-primary focus:ring-primary/20 transition-all duration-200"
           required
         />
-      </div>
 
-      <div class="mb-3">
         <input
+          hlmInput
           type="text"
           [(ngModel)]="houseNumber"
           name="houseNumber"
-          placeholder="House Number"
-          class="form-control form-control-lg rounded-3"
+          placeholder="House Number (e.g. 123A)"
+          size="lg"
+          class="w-full rounded-xl border-border/50 bg-background/50 backdrop-blur-sm focus:border-primary focus:ring-primary/20 transition-all duration-200"
           required
         />
-      </div>
 
-      <div class="mb-3">
         <input
+          hlmInput
           type="text"
           [(ngModel)]="city"
           name="city"
           placeholder="City"
-          class="form-control form-control-lg rounded-3"
+          size="lg"
+          class="w-full rounded-xl border-border/50 bg-background/50 backdrop-blur-sm focus:border-primary focus:ring-primary/20 transition-all duration-200"
           required
         />
-      </div>
 
-      <div class="mb-3">
         <input
+          hlmInput
           type="text"
           [(ngModel)]="zipCode"
           name="zipCode"
           placeholder="ZIP Code"
-          class="form-control form-control-lg rounded-3"
+          size="lg"
+          class="w-full rounded-xl border-border/50 bg-background/50 backdrop-blur-sm focus:border-primary focus:ring-primary/20 transition-all duration-200"
           required
         />
       </div>
 
-      <button type="submit" 
-              class="btn btn-gradient btn-lg rounded-3 fw-semibold w-100 hover-lift" 
+      <button hlmBtn 
+              type="submit" 
+              variant="default"
+              size="lg"
+              class="w-full rounded-xl font-semibold bg-primary hover:bg-primary/90 text-primary-foreground py-4 transition-all duration-200 hover-lift shadow-lg hover:shadow-xl" 
               [disabled]="!isFormValid()">
-        Search Offers
+        <fa-icon [icon]="faSearch" class="mr-2"></fa-icon>
+        Search Internet Offers
       </button>
     </form>
     } @else {
-    <div class="text-secondary user-select-none ms-5 py-1" 
+    <div class="text-muted-foreground select-none ml-14 py-2 font-medium" 
          (click)="toggleExpanded()"
          style="cursor: pointer;">
       Search for internet offers by address...
