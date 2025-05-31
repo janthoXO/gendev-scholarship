@@ -250,11 +250,9 @@
 
     <!-- Results -->
     @if (filteredOffers().length > 0) {
-    <div class="row g-4">
+    <div class="d-flex flex-column gap-3">
       @for (offer of filteredOffers(); track offer.offerHash) {
-      <div class="col-md-6 col-lg-4">
-        <app-offer-card [offer]="offer"></app-offer-card>
-      </div>
+      <app-offer-card [offer]="offer"></app-offer-card>
       }
     </div>
     } @else if (!isLoading() && !error()) {

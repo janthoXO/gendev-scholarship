@@ -1,81 +1,118 @@
-<div class="offer-card" [class.preliminary]="offer().isPreliminary">
-  <div class="offer-header">
-    <h3 class="provider-name">{{ offer().provider }}</h3>
-    @if (offer().isPreliminary) {
-    <span class="preliminary-badge">Cached</span>
-    }
-  </div>
-
-  <div class="offer-details">
-    <div class="product-name">{{ offer().productName }}</div>
-
-    <div class="offer-specs">
-      <div class="spec">
-        <span class="spec-label">Speed:</span>
-        <span class="spec-value">{{ offer().speed }} Mbps</span>
+<div class="card shadow-sm border-0 rounded-4 offer-card bg-white bg-opacity-95" [class.preliminary]="offer().isPreliminary">
+  <div class="card-body p-lg-4 p-md-3 p-2">
+    <div class="row align-items-center">
+      <!-- Provider Info Column -->
+      <div class="col-lg-3 col-md-4 mb-3 mb-md-0">
+        <div class="d-flex align-items-center justify-content-between">
+          <div class="d-flex align-items-center">
+            @if (hasProviderLogo(offer().provider)) {
+            <img 
+              [src]="getProviderLogo(offer().provider)!" 
+              [alt]="offer().provider + ' logo'"
+              class="me-3 rounded-3 bg-light p-1 border provider-logo"
+              style="object-fit: contain;"
+            />
+            } @else {
+            <div class="me-3 d-flex align-items-center justify-content-center rounded-3 bg-light border provider-logo">
+              <fa-icon [icon]="faGlobe" class="text-muted fs-5"></fa-icon>
+            </div>
+            }
+            <div>
+              <h6 class="fw-bold mb-0 d-none d-lg-block text-dark">{{ offer().provider }}</h6>
+              <p class="text-secondary small mb-0 fw-medium text-uppercase opacity-75 lh-1">{{ offer().productName }}</p>
+            </div>
+          </div>
+          @if (offer().isPreliminary) {
+          <span class="badge badge-apple-orange border rounded-pill px-2 py-1 small text-uppercase fw-semibold">
+            Cached
+          </span>
+          }
+        </div>
       </div>
 
-      <div class="spec">
-        <span class="spec-label">Connection:</span>
-        <span class="spec-value">{{ offer().connectionType }}</span>
+      <!-- Specifications Column -->
+      <div class="col-lg-4 col-md-4 mb-3 mb-md-0">
+        <div class="row g-2">
+          <div class="col-6">
+            <div class="d-flex flex-column">
+              <span class="text-secondary small fw-medium text-uppercase opacity-75 lh-1">Speed</span>
+              <span class="fw-semibold text-dark">{{ offer().speed }} Mbps</span>
+            </div>
+          </div>
+          <div class="col-6">
+            <div class="d-flex flex-column">
+              <span class="text-secondary small fw-medium text-uppercase opacity-75 lh-1">Connection</span>
+              <span class="fw-semibold text-dark">{{ offer().connectionType }}</span>
+            </div>
+          </div>
+          <div class="col-6">
+            <div class="d-flex flex-column">
+              <span class="text-secondary small fw-medium text-uppercase opacity-75 lh-1">Contract</span>
+              <span class="fw-semibold text-dark">{{ offer().contractDurationInMonths }} months</span>
+            </div>
+          </div>
+          @if (offer().limitInGb) {
+          <div class="col-6">
+            <div class="d-flex flex-column">
+              <span class="text-secondary small fw-medium text-uppercase opacity-75 lh-1">Data Limit</span>
+              <span class="fw-semibold text-dark">{{ offer().limitInGb }} GB</span>
+            </div>
+          </div>
+          }
+          @if (offer().tv) {
+          <div class="col-12">
+            <div class="d-flex flex-column">
+              <span class="text-secondary small fw-medium text-uppercase opacity-75 lh-1">TV</span>
+              <span class="fw-semibold text-dark">{{ offer().tv }}</span>
+            </div>
+          </div>
+          }
+        </div>
       </div>
 
-      <div class="spec">
-        <span class="spec-label">Contract:</span>
-        <span class="spec-value"
-          >{{ offer().contractDurationInMonths }} months</span
-        >
+      <!-- Features Column -->
+      <div class="col-lg-2 col-md-12">
+        <div class="d-flex flex-wrap gap-1 justify-content-lg-end justify-content-md-start">
+          @if (offer().installationService) {
+          <span class="badge badge-apple-blue border rounded-pill px-2 py-1 small text-uppercase fw-semibold">
+            Installation
+          </span>
+          }
+          @if (offer().maxAgePerson) {
+          <span class="badge badge-apple-gray border rounded-pill px-2 py-1 small text-uppercase fw-semibold">
+            Max Age: {{ offer().maxAgePerson }}
+          </span>
+          }
+        </div>
       </div>
 
-      @if (offer().limitInGb) {
-      <div class="spec">
-        <span class="spec-label">Data Limit:</span>
-        <span class="spec-value">{{ offer().limitInGb }} GB</span>
+      <!-- Pricing Column -->
+      <div class="col-lg-3 col-md-4 mb-3 mb-md-0">
+        <div class="text-center">
+          <div class="mb-2">
+            <span class="h4 fw-bold mb-0 text-primary">€{{ (offer().monthlyCostInCent / 100).toFixed(2) }}</span>
+            <span class="text-secondary small opacity-75">/month</span>
+          </div>
+          
+          @if (offer().afterTwoYearsMonthlyCost && offer().afterTwoYearsMonthlyCost !== offer().monthlyCostInCent) {
+          <div class="mb-2">
+            <span class="text-secondary small opacity-75">After 2 years: </span>
+            <span class="fw-semibold text-dark">€{{ (offer().afterTwoYearsMonthlyCost! / 100).toFixed(2) }}</span>
+          </div>
+          }
+          
+          @if (offer().voucherType && offer().voucherValue) {
+          <div class="badge badge-apple-green border rounded-pill px-2 py-1 small text-uppercase fw-semibold">
+            @if (offer().voucherType === 'percentage') {
+            {{ offer().voucherValue }}% off
+            } @else {
+            €{{ (offer().voucherValue! / 100).toFixed(2) }} off
+            }
+          </div>
+          }
+        </div>
       </div>
-      } @if (offer().tv) {
-      <div class="spec">
-        <span class="spec-label">TV:</span>
-        <span class="spec-value">{{ offer().tv }}</span>
-      </div>
-      }
-    </div>
 
-    <div class="pricing">
-      <div class="monthly-cost">
-        <span class="cost-label">Monthly Cost</span>
-        <span class="cost-value"
-          >€{{ (offer().monthlyCostInCent / 100).toFixed(2) }}</span
-        >
-      </div>
-
-      @if (offer().afterTwoYearsMonthlyCost && offer().afterTwoYearsMonthlyCost
-      !== offer().monthlyCostInCent) {
-      <div class="after-two-years">
-        <span class="cost-label">After 2 years</span>
-        <span class="cost-value"
-          >€{{ (offer().afterTwoYearsMonthlyCost! / 100).toFixed(2) }}</span
-        >
-      </div>
-      } @if (offer().voucherType && offer().voucherValue) {
-      <div class="voucher">
-        <span class="voucher-label">Voucher:</span>
-        @if (offer().voucherType === 'percentage') {
-        <span class="voucher-value">{{ offer().voucherValue }}% off</span>
-        } @else {
-        <span class="voucher-value"
-          >€{{ (offer().voucherValue! / 100).toFixed(2) }} off</span
-        >
-        }
-      </div>
-      }
-    </div>
-
-    <div class="offer-features">
-      @if (offer().installationService) {
-      <span class="feature-badge">Installation Service</span>
-      } @if (offer().maxAgePerson) {
-      <span class="feature-badge">Max Age: {{ offer().maxAgePerson }}</span>
-      }
     </div>
   </div>
 </div>
