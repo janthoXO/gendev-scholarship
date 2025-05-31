@@ -48,9 +48,10 @@ type ConnectionType string
 
 // ConnectionType enum values
 const (
-	DSL   ConnectionType = "DSL"
-	CABLE ConnectionType = "CABLE"
-	FIBER ConnectionType = "FIBER"
+	DSL    ConnectionType = "DSL"
+	CABLE  ConnectionType = "CABLE"
+	FIBER  ConnectionType = "FIBER"
+	MOBILE ConnectionType = "MOBILE"
 )
 
 func (c ConnectionType) String() string {
@@ -66,6 +67,8 @@ func FromStringToConnectionType(s string) ConnectionType {
 		return CABLE
 	case "FIBER":
 		return FIBER
+	case "MOBILE":
+		return MOBILE
 	default:
 		return ConnectionType(s) // Return as is if not recognized
 	}
