@@ -2,12 +2,6 @@
 
 /* Card hover effect using CSS custom properties for Apple design */
 :host {
-  --apple-text-primary: #1d1d1f;
-  --apple-text-secondary: #86868b;
-  --apple-blue: #007aff;
-  --apple-orange: #ff9500;
-  --apple-green: #34c759;
-  --apple-gray: #8e8e93;
   --apple-transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
@@ -15,49 +9,12 @@
   transition: var(--apple-transition);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
-  border: 1px solid rgba(0, 0, 0, 0.05) !important;
 }
 
 .offer-card:hover {
-  transform: translateY(-2px);
+  transform: translateY(-0.3rem);
 }
 
 .offer-card.preliminary {
-  border-left: 4px solid var(--bs-warning) !important;
-}
-
-/* Provider logo with responsive sizing using Bootstrap-like approach */
-.provider-logo {
-  width: 3rem;
-  height: 3rem;
-  transition: var(--apple-transition);
-}
-
-/* Apple-style badge colors - custom colors not available in Bootstrap */
-.badge-apple-orange {
-  background-color: rgba(255, 149, 0, 0.1) !important;
-  color: var(--apple-orange) !important;
-  border-color: rgba(255, 149, 0, 0.3) !important;
-  font-size: 0.7rem !important;
-}
-
-.badge-apple-green {
-  background-color: rgba(52, 199, 89, 0.1) !important;
-  color: var(--apple-green) !important;
-  border-color: rgba(52, 199, 89, 0.3) !important;
-  font-size: 0.7rem !important;
-}
-
-.badge-apple-blue {
-  background-color: rgba(0, 122, 255, 0.1) !important;
-  color: var(--apple-blue) !important;
-  border-color: rgba(0, 122, 255, 0.3) !important;
-  font-size: 0.7rem !important;
-}
-
-.badge-apple-gray {
-  background-color: rgba(142, 142, 147, 0.1) !important;
-  color: var(--apple-gray) !important;
-  border-color: rgba(142, 142, 147, 0.3) !important;
-  font-size: 0.7rem !important;
+  border-left: 0.3rem solid var(--bs-warning) !important;
 }

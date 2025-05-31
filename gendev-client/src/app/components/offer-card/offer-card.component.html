@@ -1,4 +1,4 @@
-<div class="card shadow-sm border-0 rounded-4 offer-card bg-white bg-opacity-95" [class.preliminary]="offer().isPreliminary">
+<div class="card shadow-sm border rounded-4 offer-card" [class.preliminary]="offer().isPreliminary">
   <div class="card-body p-lg-4 p-md-3 p-2">
     <div class="row align-items-center">
       <!-- Provider Info Column -->
@@ -9,11 +9,10 @@
             <img 
               [src]="getProviderLogo(offer().provider)!" 
               [alt]="offer().provider + ' logo'"
-              class="me-3 rounded-3 bg-light p-1 border provider-logo"
-              style="object-fit: contain;"
+              class="img-thumbnail w-25 h-25 me-3 rounded-3 bg-light p-1"
             />
             } @else {
-            <div class="me-3 d-flex align-items-center justify-content-center rounded-3 bg-light border provider-logo">
+            <div class="d-flex align-items-center justify-content-center img-thumbnail w-25 h-25 me-3 rounded-3 bg-light p-1">
               <fa-icon [icon]="faGlobe" class="text-muted fs-5"></fa-icon>
             </div>
             }
@@ -23,7 +22,7 @@
             </div>
           </div>
           @if (offer().isPreliminary) {
-          <span class="badge badge-apple-orange border rounded-pill px-2 py-1 small text-uppercase fw-semibold">
+          <span class="badge rounded-pill text-bg-success border px-2 py-1 small text-uppercase fw-semibold">
             Cached
           </span>
           }
@@ -74,12 +73,12 @@
       <div class="col-lg-2 col-md-12">
         <div class="d-flex flex-wrap gap-1 justify-content-lg-end justify-content-md-start">
           @if (offer().installationService) {
-          <span class="badge badge-apple-blue border rounded-pill px-2 py-1 small text-uppercase fw-semibold">
+          <span class="badge rounded-pill text-bg-primary border px-2 py-1 small text-uppercase fw-semibold">
             Installation
           </span>
           }
           @if (offer().maxAgePerson) {
-          <span class="badge badge-apple-gray border rounded-pill px-2 py-1 small text-uppercase fw-semibold">
+          <span class="badge rounded-pill text-bg-light border px-2 py-1 small text-uppercase fw-semibold">
             Max Age: {{ offer().maxAgePerson }}
           </span>
           }
@@ -102,7 +101,7 @@
           }
           
           @if (offer().voucherType && offer().voucherValue) {
-          <div class="badge badge-apple-green border rounded-pill px-2 py-1 small text-uppercase fw-semibold">
+          <div class="badge rounded-pill text-bg-success border px-2 py-1 small text-uppercase fw-semibold">
             @if (offer().voucherType === 'percentage') {
             {{ offer().voucherValue }}% off
             } @else {
