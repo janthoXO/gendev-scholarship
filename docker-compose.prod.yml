@@ -97,7 +97,7 @@ services:
     depends_on:
       - server
     environment:
-      - API_URL=${DOMAIN}/api
+      - API_URL=https://${DOMAIN}/api
     restart: unless-stopped
     labels:
       - "traefik.enable=true"
