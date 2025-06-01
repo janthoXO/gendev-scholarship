@@ -1,7 +1,7 @@
 # CHECK24 GenDev Internet Provider Comparison Challenge by Dennis Jandow
 
-This is my solution for the CHECK24 GenDev Internet Provider Comparison Challenge with **golang channels**, **caching** and more.\
-The Problem Statement can be found [here](PROBLEM.md).
+This is my solution for the CHECK24 GenDev Internet Provider Comparison Challenge with **golang channels**, **caching** and more. You can access the hosted example version here: [https://52.138.213.134.nip.io](https://52.138.213.134.nip.io)\
+The initial Problem Statement can be found [here](PROBLEM.md).
 
 ## Table of Contents
 
