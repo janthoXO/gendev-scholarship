@@ -46,6 +46,7 @@ services:
       - PINGPERFECT_CLIENT_ID=${PINGPERFECT_CLIENT_ID}
       - WEBWUNDER_API_KEY=${WEBWUNDER_API_KEY}
       - BYTEME_API_KEY=${BYTEME_API_KEY}
+      - DEBUG=${DEBUG:-false}
     depends_on:
       - offer-cache
       - user-offer-cache

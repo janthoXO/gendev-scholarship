@@ -1,9 +1,8 @@
 package domain
 
 import (
-	"crypto/sha256"
-	"encoding/base64"
 	"fmt"
+	"server/utils"
 	"strings"
 )
 
@@ -34,12 +33,10 @@ type Offer struct {
 }
 
 func (o *Offer) GenerateHash() {
-	h := sha256.New()
-	h.Write(fmt.Appendf(nil, "%s%d%s%d%d%s%s%d%d%d%d%d%t%s%v", o.Provider, o.ProductID, o.ProductName,
+	o.HelperOfferHash = utils.HashURLEncoded(fmt.Appendf(nil, "%s%d%s%d%d%s%s%d%d%d%d%d%t%s%v", o.Provider, o.ProductID, o.ProductName,
 		o.Speed, o.ContractDurationInMonths, o.ConnectionType, o.Tv, o.LimitInGb, o.MaxAgePerson,
 		o.MonthlyCostInCent, o.AfterTwoYearsMonthlyCost, o.MonthlyCostInCentWithVoucher, o.InstallationService,
 		o.VoucherDetails.GetHash(), o.ExtraProperties))
-	o.HelperOfferHash = base64.RawURLEncoding.EncodeToString(h.Sum(nil))
 }
 
 // ConnectionType represents the type of internet connection
@@ -76,18 +73,16 @@ func FromStringToConnectionType(s string) ConnectionType {
 type VoucherType string
 
 const (
-	ABSOLUTE VoucherType = "ABSOLUTE"
+	ABSOLUTE   VoucherType = "ABSOLUTE"
 	PERCENTAGE VoucherType = "PERCENTAGE"
 )
 
 type VoucherDetails struct {
-	Type  VoucherType `json:"voucherType"`
-	Value int    `json:"voucherValue"`
-	Description string `json:"voucherDescription,omitempty"`
+	Type        VoucherType `json:"voucherType"`
+	Value       int         `json:"voucherValue"`
+	Description string      `json:"voucherDescription,omitempty"`
 }
 
 func (v *VoucherDetails) GetHash() string {
-	h := sha256.New()
-	h.Write(fmt.Appendf(nil, "%s%d", v.Type, v.Value))
-	return string(h.Sum(nil))
+	return string(utils.Hash(fmt.Appendf(nil, "%s%d", v.Type, v.Value)))
 }

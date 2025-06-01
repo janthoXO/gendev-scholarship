@@ -2,8 +2,6 @@ package controller
 
 import (
 	"context"
-	"crypto/sha256"
-	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -99,29 +97,27 @@ func (filter FilterOptionParams) isEmpty() bool {
 }
 
 func (filter FilterOptionParams) hash() string {
-	h := sha256.New()
-	agg := ""
+	agg := make([]byte, 0)
 	if filter.Provider != nil {
-		agg += *filter.Provider
+		agg = fmt.Appendf(agg, "%s", *filter.Provider)
 	}
 	if filter.Installation != nil {
-		agg += fmt.Sprintf("%t", *filter.Installation)
+		agg = fmt.Appendf(agg, "%t", *filter.Installation)
 	}
 	if filter.SpeedMin != nil {
-		agg += fmt.Sprintf("%d", *filter.SpeedMin)
+		agg = fmt.Appendf(agg, "%d", *filter.SpeedMin)
 	}
 	if filter.Age != nil {
-		agg += fmt.Sprintf("%d", *filter.Age)
+		agg = fmt.Appendf(agg, "%d", *filter.Age)
 	}
 	if filter.CostMax != nil {
-		agg += fmt.Sprintf("%d", *filter.CostMax)
+		agg = fmt.Appendf(agg, "%d", *filter.CostMax)
 	}
 	if filter.ConnectionType != nil {
-		agg += (*filter.ConnectionType).String()
+		agg = fmt.Appendf(agg, "%s", (*filter.ConnectionType).String())
 	}
 
-	h.Write([]byte(agg))
-	return base64.RawURLEncoding.EncodeToString(h.Sum(nil))
+	return string(utils.Hash(agg))
 }
 
 func FetchOffersByAddress(c *gin.Context) {
@@ -317,11 +313,12 @@ func ShareOffer(c *gin.Context) {
 
 	// as we filter client side, but want to display the same offers in the share link, we need to filter the cached offers now before creating the snapshot
 	var filterParams FilterOptionParams
-	if err := c.ShouldBindQuery(&filterParams); err != nil {
+	if err := c.ShouldBind(&filterParams); err != nil {
 		log.WithError(err).Warn("Failed to parse filter query parameters")
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid filter query parameters"})
 		return
 	}
+	log.Debugf("Filter parameters: %+v", filterParams)
 
 	query, err := db.UserOfferCacheInstance.GetCachedUserQuery(c.Request.Context(), queryHash+":"+sessionId)
 	if err != nil {
@@ -335,11 +332,12 @@ func ShareOffer(c *gin.Context) {
 	filteredOffers := make(map[string]domain.Offer)
 
 	// create shareId by hashing of offer hashes, filterParams and queryHash
-	shareId := queryHash + filterParams.hash() + sessionId
+	idAgg := make([]byte, 0)
+	idAgg = fmt.Appendf(idAgg, "%s%s", queryHash, filterParams.hash())
 	for _, offer := range query.Offers {
 		if isFilterEmpty || filterParams.standardFilter(offer) {
 			filteredOffers[offer.HelperOfferHash] = offer
-			shareId += offer.HelperOfferHash
+			idAgg = fmt.Appendf(idAgg, "%s%t", offer.HelperOfferHash, offer.HelperIsPreliminary)
 		}
 	}
 	query.Offers = filteredOffers
@@ -350,9 +348,7 @@ func ShareOffer(c *gin.Context) {
 		return
 	}
 
-	h := sha256.New()
-	h.Write([]byte(shareId))
-	shareId = base64.RawURLEncoding.EncodeToString(h.Sum(nil))
+	shareId := utils.HashURLEncoded([]byte(idAgg))
 
 	exists, err := db.QueryExists(c.Request.Context(), shareId)
 	if err != nil {

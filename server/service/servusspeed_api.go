@@ -65,8 +65,6 @@ func (api *ServusSpeedApi) GetOffersStream(ctx context.Context, address domain.A
 	// Step 2: Get the details for each product ID in parallel
 	var wg sync.WaitGroup
 
-	productIDs = productIDs[0:1]
-
 	for _, productID := range productIDs {
 		wg.Add(1)
 		go func(id string) {
