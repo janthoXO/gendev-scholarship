@@ -26,32 +26,63 @@
         <div class="feature group">
           <div class="bg-card rounded-3xl p-8 lg:p-10 shadow-sm border border-border transition-all duration-500 hover:shadow-xl hover:-translate-y-1 hover:scale-[1.02]">
             <div class="w-16 h-16 bg-primary rounded-2xl flex items-center justify-center mb-6 mx-auto">
-              <span class="text-2xl text-primary-foreground">⚡</span>
+              <fa-icon [icon]="faBolt" class="text-2xl text-primary-foreground"></fa-icon>
             </div>
-            <h3 class="text-2xl font-semibold text-card-foreground mb-4">Fast Comparison</h3>
-            <p class="text-muted-foreground text-lg leading-relaxed">Compare offers from multiple providers instantly with our streamlined interface</p>
+            <h3 class="text-2xl font-semibold text-card-foreground mb-4">Real-time Streaming</h3>
+            <p class="text-muted-foreground text-lg leading-relaxed">Results stream instantly via NDJSON as providers respond, using Go channels for parallel processing</p>
+          </div>
+        </div>
+
+        <div class="feature group">
+          <div class="bg-card rounded-3xl p-8 lg:p-10 shadow-sm border border-border transition-all duration-500 hover:shadow-xl hover:-translate-y-1 hover:scale-[1.02]">
+            <div class="w-16 h-16 bg-primary rounded-2xl flex items-center justify-center mb-6 mx-auto">
+              <fa-icon [icon]="faMicrochip" class="text-2xl text-primary-foreground"></fa-icon>
+            </div>
+            <h3 class="text-2xl font-semibold text-card-foreground mb-4">High Parallelism</h3>
+            <p class="text-muted-foreground text-lg leading-relaxed">Go channels orchestrate concurrent API calls with jittered retry mechanisms for optimal performance</p>
+          </div>
+        </div>
+
+        <div class="feature group">
+          <div class="bg-card rounded-3xl p-8 lg:p-10 shadow-sm border border-border transition-all duration-500 hover:shadow-xl hover:-translate-y-1 hover:scale-[1.02]">
+            <div class="w-16 h-16 bg-primary rounded-2xl flex items-center justify-center mb-6 mx-auto">
+              <fa-icon [icon]="faTrophy" class="text-2xl text-primary-foreground"></fa-icon>
+            </div>
+            <h3 class="text-2xl font-semibold text-card-foreground mb-4">HackaTUM Performance</h3>
+            <p class="text-muted-foreground text-lg leading-relaxed">Built with the same winning approach from HackaTUM challenge - delivering enterprise grade performance</p>
           </div>
         </div>
         
         <div class="feature group">
           <div class="bg-card rounded-3xl p-8 lg:p-10 shadow-sm border border-border transition-all duration-500 hover:shadow-xl hover:-translate-y-1 hover:scale-[1.02]">
             <div class="w-16 h-16 bg-secondary rounded-2xl flex items-center justify-center mb-6 mx-auto">
-              <span class="text-2xl text-secondary-foreground">💰</span>
+              <fa-icon [icon]="faLayerGroup" class="text-2xl text-secondary-foreground"></fa-icon>
             </div>
-            <h3 class="text-2xl font-semibold text-card-foreground mb-4">Best Prices</h3>
-            <p class="text-muted-foreground text-lg leading-relaxed">Find the most competitive rates and exclusive deals in your area</p>
+            <h3 class="text-2xl font-semibold text-card-foreground mb-4">Smart Caching</h3>
+            <p class="text-muted-foreground text-lg leading-relaxed">Multi-tier cache system provides preliminary results while fetching fresh data in the background</p>
           </div>
         </div>
         
         <div class="feature group">
           <div class="bg-card rounded-3xl p-8 lg:p-10 shadow-sm border border-border transition-all duration-500 hover:shadow-xl hover:-translate-y-1 hover:scale-[1.02]">
             <div class="w-16 h-16 bg-accent rounded-2xl flex items-center justify-center mb-6 mx-auto">
-              <span class="text-2xl text-accent-foreground">📊</span>
+              <fa-icon [icon]="faShareAlt" class="text-2xl text-accent-foreground"></fa-icon>
             </div>
-            <h3 class="text-2xl font-semibold text-card-foreground mb-4">Detailed Info</h3>
-            <p class="text-muted-foreground text-lg leading-relaxed">Get comprehensive details and transparent information about each offer</p>
+            <h3 class="text-2xl font-semibold text-card-foreground mb-4">Snapshot Sharing</h3>
+            <p class="text-muted-foreground text-lg leading-relaxed">Share exact search results with persistent snapshots, even when providers are offline</p>
           </div>
         </div>
+        
+        <div class="feature group">
+          <div class="bg-card rounded-3xl p-8 lg:p-10 shadow-sm border border-border transition-all duration-500 hover:shadow-xl hover:-translate-y-1 hover:scale-[1.02]">
+            <div class="w-16 h-16 bg-secondary rounded-2xl flex items-center justify-center mb-6 mx-auto">
+              <fa-icon [icon]="faShieldAlt" class="text-2xl text-secondary-foreground"></fa-icon>
+            </div>
+            <h3 class="text-2xl font-semibold text-card-foreground mb-4">Fault Tolerance</h3>
+            <p class="text-muted-foreground text-lg leading-relaxed">Graceful degradation ensures smooth experience even when provider APIs fail or respond slowly</p>
+          </div>
+        </div>
+        
       </div>
     </div>
   </div>

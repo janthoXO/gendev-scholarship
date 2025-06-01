@@ -1,27 +1,41 @@
-<div class="bg-background/80 backdrop-blur-sm border border-border rounded-2xl shadow-sm hover:shadow-md transition-all duration-200 hover:-translate-y-1" [class.opacity-75]="offer().isPreliminary">
+<div
+  class="bg-background/80 backdrop-blur-sm border border-border rounded-2xl shadow-sm hover:shadow-md transition-all duration-200 hover:-translate-y-1"
+  [class.opacity-75]="offer().isPreliminary"
+>
   <div class="p-6">
     <div class="grid grid-cols-1 lg:grid-cols-12 gap-4 items-center">
       <!-- Provider Info Column -->
       <div class="lg:col-span-3 md:col-span-4">
         <div class="flex items-center space-x-3">
           @if (hasProviderLogo(offer().provider)) {
-          <img 
-            [src]="getProviderLogo(offer().provider)!" 
+          <img
+            [src]="getProviderLogo(offer().provider)!"
             [alt]="offer().provider + ' logo'"
             class="w-12 h-12 rounded-lg border border-border bg-muted object-cover"
           />
           } @else {
-          <div class="w-12 h-12 rounded-lg border border-border bg-muted flex items-center justify-center">
-            <fa-icon [icon]="faGlobe" class="text-muted-foreground text-lg"></fa-icon>
+          <div
+            class="w-12 h-12 rounded-lg border border-border bg-muted flex items-center justify-center"
+          >
+            <fa-icon
+              [icon]="faGlobe"
+              class="text-muted-foreground text-lg"
+            ></fa-icon>
           </div>
           }
           <div class="min-w-0 flex-1">
-            <h6 class="font-semibold text-sm text-foreground hidden lg:block truncate">{{ offer().provider }}</h6>
-            <p class="text-xs text-muted-foreground font-medium uppercase tracking-wide">{{ offer().productName }}</p>
+            <h6
+              class="font-semibold text-sm text-foreground hidden lg:block truncate"
+            >
+              {{ offer().provider }}
+            </h6>
+            <p
+              class="text-xs text-muted-foreground font-medium uppercase tracking-wide"
+            >
+              {{ offer().productName }}
+            </p>
             @if (offer().isPreliminary) {
-            <span hlmBadge variant="outline" class="mt-1">
-              Cached
-            </span>
+            <span hlmBadge variant="outline" class="mt-1"> Cached </span>
             }
           </div>
         </div>
@@ -31,27 +45,51 @@
       <div class="lg:col-span-4 md:col-span-4">
         <div class="grid grid-cols-2 gap-3">
           <div class="space-y-1">
-            <span class="text-xs text-muted-foreground font-medium uppercase tracking-wide">Speed </span>
-            <span class="text-sm font-semibold text-foreground">{{ offer().speed }} Mbps</span>
+            <span
+              class="text-xs text-muted-foreground font-medium uppercase tracking-wide"
+              >Speed
+            </span>
+            <span class="text-sm font-semibold text-foreground"
+              >{{ offer().speed }} Mbps</span
+            >
           </div>
           <div class="space-y-1">
-            <span class="text-xs text-muted-foreground font-medium uppercase tracking-wide">Connection </span>
-            <span class="text-sm font-semibold text-foreground">{{ offer().connectionType }}</span>
+            <span
+              class="text-xs text-muted-foreground font-medium uppercase tracking-wide"
+              >Connection
+            </span>
+            <span class="text-sm font-semibold text-foreground">{{
+              offer().connectionType
+            }}</span>
           </div>
           <div class="space-y-1">
-            <span class="text-xs text-muted-foreground font-medium uppercase tracking-wide">Contract </span>
-            <span class="text-sm font-semibold text-foreground">{{ offer().contractDurationInMonths }} months</span>
+            <span
+              class="text-xs text-muted-foreground font-medium uppercase tracking-wide"
+              >Contract
+            </span>
+            <span class="text-sm font-semibold text-foreground"
+              >{{ offer().contractDurationInMonths }} months</span
+            >
           </div>
           @if (offer().limitInGb) {
           <div class="space-y-1">
-            <span class="text-xs text-muted-foreground font-medium uppercase tracking-wide">Data Limit </span>
-            <span class="text-sm font-semibold text-foreground">{{ offer().limitInGb }} GB</span>
+            <span
+              class="text-xs text-muted-foreground font-medium uppercase tracking-wide"
+              >Data Limit
+            </span>
+            <span class="text-sm font-semibold text-foreground"
+              >{{ offer().limitInGb }} GB</span
+            >
           </div>
-          }
-          @if (offer().tv) {
+          } @if (offer().tv) {
           <div class="col-span-2 space-y-1">
-            <span class="text-xs text-muted-foreground font-medium uppercase tracking-wide">TV </span>
-            <span class="text-sm font-semibold text-foreground">{{ offer().tv }}</span>
+            <span
+              class="text-xs text-muted-foreground font-medium uppercase tracking-wide"
+              >TV
+            </span>
+            <span class="text-sm font-semibold text-foreground">{{
+              offer().tv
+            }}</span>
           </div>
           }
         </div>
@@ -61,11 +99,8 @@
       <div class="lg:col-span-2 md:col-span-12">
         <div class="flex flex-wrap gap-2 lg:justify-end md:justify-start">
           @if (offer().installationService) {
-          <span hlmBadge variant="default">
-            Installation included
-          </span>
-          }
-          @if (offer().maxAgePerson) {
+          <span hlmBadge variant="default"> Installation included </span>
+          } @if (offer().maxAgePerson) {
           <span hlmBadge variant="secondary">
             Max Age: {{ offer().maxAgePerson }}
           </span>
@@ -76,23 +111,36 @@
       <!-- Pricing Column -->
       <div class="lg:col-span-3 md:col-span-4">
         <div class="text-center space-y-2">
-          @if (offer().monthlyCostInCentWithVoucher && offer().monthlyCostInCentWithVoucher !== offer().monthlyCostInCent) {
+          @if (offer().monthlyCostInCentWithVoucher &&
+          offer().monthlyCostInCentWithVoucher !== offer().monthlyCostInCent) {
           <!-- Discounted price with original price struck through -->
           <div>
-            <div class="text-sm text-muted-foreground line-through">€{{ (offer().monthlyCostInCent / 100).toFixed(2) }}</div>
+            <div class="text-sm text-muted-foreground line-through">
+              €{{ (offer().monthlyCostInCent / 100).toFixed(2) }}
+            </div>
             <div class="flex items-center justify-center gap-1">
-              <span class="text-2xl font-bold text-primary">€{{ (offer().monthlyCostInCentWithVoucher! / 100).toFixed(2) }}</span>
+              <span class="text-2xl font-bold text-primary"
+                >€{{
+                  (offer().monthlyCostInCentWithVoucher! / 100).toFixed(2)
+                }}</span
+              >
               @if (offer().voucherDetails) {
               <div class="relative group">
-                <fa-icon 
-                  [icon]="faInfoCircle" 
+                <fa-icon
+                  [icon]="faInfoCircle"
                   class="text-muted-foreground hover:text-primary text-sm cursor-help transition-colors"
                 ></fa-icon>
                 <!-- Tooltip -->
-                <div class="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-2 bg-popover text-popover-foreground text-xs rounded-lg shadow-md border border-border opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none w-48 text-center z-10">
-                  <span class="whitespace-pre-line">{{ getVoucherDescription() }}</span>
+                <div
+                  class="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-2 bg-popover text-popover-foreground text-xs rounded-lg shadow-md border border-border opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none w-48 text-center z-10"
+                >
+                  <span class="whitespace-pre-line">{{
+                    getVoucherDescription()
+                  }}</span>
                   <!-- Arrow -->
-                  <div class="absolute top-full left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-4 border-r-4 border-t-4 border-l-transparent border-r-transparent border-t-border"></div>
+                  <div
+                    class="absolute top-full left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-4 border-r-4 border-t-4 border-l-transparent border-r-transparent border-t-border"
+                  ></div>
                 </div>
               </div>
               }
@@ -102,20 +150,22 @@
           } @else {
           <!-- Regular price -->
           <div>
-            <span class="text-2xl font-bold text-primary">€{{ (offer().monthlyCostInCent / 100).toFixed(2) }}</span>
+            <span class="text-2xl font-bold text-primary"
+              >€{{ (offer().monthlyCostInCent / 100).toFixed(2) }}</span
+            >
             <span class="text-sm text-muted-foreground">/month</span>
           </div>
-          }
-          
-          @if (offer().afterTwoYearsMonthlyCost && offer().afterTwoYearsMonthlyCost !== offer().monthlyCostInCent) {
+          } @if (offer().afterTwoYearsMonthlyCost &&
+          offer().afterTwoYearsMonthlyCost !== offer().monthlyCostInCent) {
           <div>
             <span class="text-xs text-muted-foreground">After 2 years: </span>
-            <span class="text-sm font-semibold text-foreground">€{{ (offer().afterTwoYearsMonthlyCost! / 100).toFixed(2) }}</span>
+            <span class="text-sm font-semibold text-foreground"
+              >€{{ (offer().afterTwoYearsMonthlyCost! / 100).toFixed(2) }}</span
+            >
           </div>
           }
         </div>
       </div>
-
     </div>
   </div>
 </div>
