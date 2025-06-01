@@ -22,7 +22,7 @@ FROM nginx:alpine
 COPY --from=build /app/dist/gendev-client/browser /usr/share/nginx/html
 
 # Copy nginx configuration (optional)
-COPY nginx.conf /etc/nginx/nginx.conf
+COPY nginx.conf /etc/nginx/conf.d/default.conf
 
 EXPOSE 80
 
