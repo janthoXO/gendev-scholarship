@@ -2,7 +2,7 @@ services:
   # Add this client service
   client:
     build:
-      context: ../gendev-client
+      context: .
       dockerfile: Dockerfile
     ports:
       - "4200:80"

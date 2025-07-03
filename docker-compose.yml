@@ -3,12 +3,4 @@
 
 include:
   - server/docker-compose.yml
-
-services:
-  # Override client service to add dependency on server
-  client:
-    extends:
-      file: gendev-client/docker-compose.yml
-      service: client
-    depends_on:
-      - server
+  - gendev-client/docker-compose.yml
