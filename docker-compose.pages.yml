@@ -1,0 +1,74 @@
+services:
+  server:
+    image: ghcr.io/janthoxo/gendev-scholarship/server:latest
+    ports:
+      - "5432:3030"
+    environment:
+      - SHARE_DB_URL=mongodb://share-db:27017
+      - SHARE_DB_NAME=queries
+      - SHARE_DB_USER=${SHARE_DB_USER}
+      - SHARE_DB_PASSWORD=${SHARE_DB_PASSWORD}
+      - OFFER_CACHE_URL=offer-cache:6379
+      - OFFER_CACHE_PASSWORD=${OFFER_CACHE_PASSWORD}
+      - OFFER_CACHE_TTL_SEC=${OFFER_CACHE_TTL_SEC:-300} # 5 minutes
+      - USER_OFFER_CACHE_URL=user-offer-cache:6379
+      - USER_OFFER_CACHE_TTL_SEC=${USER_OFFER_CACHE_TTL_SEC:-86400} # 24 hours
+      - USER_OFFER_CACHE_PASSWORD=${USER_OFFER_CACHE_PASSWORD}
+      - SERVER_PORT=3030
+      - API_TIMEOUT_SEC=${API_TIMEOUT_SEC:-60}
+      - FRESHNESS_WINDOW_SEC=${FRESHNESS_WINDOW_SEC:-5}
+      - RETRY_FREQUENCY_MILLI=${RETRY_FREQUENCY_MILLI:-1000,2000,3000}
+      - VERBYNDICH_API_KEY=${VERBYNDICH_API_KEY}
+      - SERVUSSPEED_USERNAME=${SERVUSSPEED_USERNAME}
+      - SERVUSSPEED_PASSWORD=${SERVUSSPEED_PASSWORD}
+      - PINGPERFECT_SIGNATURE_SECRET=${PINGPERFECT_SIGNATURE_SECRET}
+      - PINGPERFECT_CLIENT_ID=${PINGPERFECT_CLIENT_ID}
+      - WEBWUNDER_API_KEY=${WEBWUNDER_API_KEY}
+      - BYTEME_API_KEY=${BYTEME_API_KEY}
+      - DEBUG=${DEBUG:-false}
+    depends_on:
+      - offer-cache
+      - user-offer-cache
+      - share-db
+    restart: unless-stopped
+
+  offer-cache:
+    image: redis:8.0.1
+    command: redis-server --requirepass ${OFFER_CACHE_PASSWORD}
+    ports:
+      - ":6379"
+    volumes:
+      - offer_data:/data
+    environment:
+      - REDIS_PASSWORD=${OFFER_CACHE_PASSWORD}
+    restart: unless-stopped
+
+  user-offer-cache:
+    image: redis:8.0.1
+    command: redis-server --requirepass ${USER_OFFER_CACHE_PASSWORD}
+    ports:
+      - ":6379"
+    volumes:
+      - user_offer_data:/data
+    environment:
+      - REDIS_PASSWORD=${USER_OFFER_CACHE_PASSWORD}
+    restart: unless-stopped
+
+  share-db:
+    image: mongo:7.0
+    ports:
+      - ":27017"
+    environment:
+      - MONGO_INITDB_DATABASE=queries
+      - MONGO_INITDB_ROOT_USERNAME=${SHARE_DB_USER}
+      - MONGO_INITDB_ROOT_PASSWORD=${SHARE_DB_PASSWORD}
+    volumes:
+      - mongodb-data:/data/db
+    restart: unless-stopped
+
+volumes:
+  offer_data:
+    driver: local
+  user_offer_data:
+    driver: local
+  mongodb-data:
