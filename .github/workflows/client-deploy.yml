@@ -37,7 +37,7 @@ jobs:
           
             // Environment variables
             window["env"]["production"] = true;
-            window["env"]["apiUrl"] = jand-dev.ase.in.tum.de:5432;
+            window["env"]["apiUrl"] = "jand-dev.ase.in.tum.de:5432";
             window["env"]["debug"] = false;
           })(this);
           EOF
