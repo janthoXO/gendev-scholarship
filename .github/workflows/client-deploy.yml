@@ -37,13 +37,13 @@ jobs:
           
             // Environment variables
             window["env"]["production"] = true;
-            window["env"]["apiUrl"] = "jand-dev.ase.in.tum.de:5432";
+            window["env"]["apiUrl"] = "https://jand-dev.ase.in.tum.de:5432";
             window["env"]["debug"] = false;
           })(this);
           EOF
 
       - name: Build Angular application
-        run: npm run build -- --configuration production --base-href=/gendev-scholarship/
+        run: ng build --prod --base-href "https://janthoxo.github.io/gendev-scholarship/"
 
       - name: Setup Pages
         uses: actions/configure-pages@v4
